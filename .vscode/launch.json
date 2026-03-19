@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "java",
+        "name": "Run MainApp",
+        "request": "launch",
+        "mainClass": "com.proyectoestadistico.ui.MainApp",
+        "projectName": "reporte-graficas-pdf"
+      }
+    ]
+  }
