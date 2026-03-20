@@ -54,6 +54,8 @@ public class MainApp extends JFrame {
 
     private BadgeKind badgeKind = BadgeKind.NOT_UPDATED;
     private String badgeCategoriaEs;
+    /** Coincide con la última acción "Actualizar datos (INEGI)"; para badge OK_* tras sync sin pisar SHOWING. */
+    private boolean ultimaActualizacionInegiPersistioBD;
 
     public MainApp() {
         super();
@@ -215,6 +217,10 @@ public class MainApp extends JFrame {
         this.badgeKind = kind;
         this.badgeCategoriaEs = categoriaEs;
         pintarBadge();
+    }
+
+    private void setBadgeOkTrasSyncInegi() {
+        setBadge(ultimaActualizacionInegiPersistioBD ? BadgeKind.OK_WITH_DB : BadgeKind.OK_CSV, null);
     }
 
     private void pintarBadge() {
@@ -479,6 +485,7 @@ public class MainApp extends JFrame {
         if (btnActualizarDatos == null) return;
 
         boolean persistirBD = chkPersistirBD != null && chkPersistirBD.isSelected();
+        ultimaActualizacionInegiPersistioBD = persistirBD;
         Path carpetaSalida = Path.of(System.getProperty("user.home"), "ProyectoEstadistico", "inegi_csv");
 
         btnActualizarDatos.setEnabled(false);
@@ -501,9 +508,12 @@ public class MainApp extends JFrame {
                     if (comboCategoria != null) {
                         comboCategoria.setEnabled(true);
                         cargarVisualizacionDesdeCategoriaSeleccionada();
+                        if (badgeKind == BadgeKind.DOWNLOADING) {
+                            setBadgeOkTrasSyncInegi();
+                        }
+                    } else {
+                        setBadgeOkTrasSyncInegi();
                     }
-
-                    setBadge(persistirBD ? BadgeKind.OK_WITH_DB : BadgeKind.OK_CSV, null);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     setBadge(BadgeKind.UPDATE_ERROR, null);
@@ -540,6 +550,7 @@ public class MainApp extends JFrame {
             mostrarWarn(UiMessages.get("dialog.csv.notfound.title"),
                     UiMessages.get("dialog.csv.notfound.body", escapar(etiquetaCategoriaVisible(categoria))));
             actualizarEstadoBotonPdf(false);
+            setBadgeOkTrasSyncInegi();
             return;
         }
 
@@ -548,6 +559,7 @@ public class MainApp extends JFrame {
             if (tablaDatosOriginal == null || tablaDatosOriginal.getNumeroColumnas() == 0) {
                 mostrarError(UiMessages.get("dialog.invalid.title"), UiMessages.get("dialog.invalid.body"));
                 actualizarEstadoBotonPdf(false);
+                setBadgeOkTrasSyncInegi();
                 return;
             }
             if (tablaDatosOriginal.getNumeroFilas() == 0) {

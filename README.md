@@ -72,7 +72,38 @@ java -cp "target/reporte-graficas-pdf-1.0-SNAPSHOT.jar;target/dependency/*" com.
 
 ### SQL Server
 
-La cadena de conexión y credenciales están en `com.proyectoestadistico.db.ConexionSQLServer`. Para entornos reales conviene usar variables de entorno o un fichero externo no versionado, y rotar claves si alguna llegó a subirse a un repo público.
+La conexión se resuelve en este orden (**las variables de entorno tienen prioridad** sobre el archivo):
+
+1. Variables de entorno (recomendado en servidores / CI):
+
+   | Variable | Descripción |
+   |----------|-------------|
+   | `SQLSERVER_HOST` | Servidor (ej. `localhost` o nombre de instancia) |
+   | `SQLSERVER_PORT` | Puerto (por defecto `1433` si no se define) |
+   | `SQLSERVER_DATABASE` | Nombre de la base de datos |
+   | `SQLSERVER_USER` | Usuario |
+   | `SQLSERVER_PASSWORD` | Contraseña |
+   | `SQLSERVER_ENCRYPT` | `true` / `false` (por defecto `true`) |
+   | `SQLSERVER_TRUST_SERVER_CERTIFICATE` | `true` / `false` (por defecto `true`, típico en desarrollo) |
+
+2. Archivo local (misma carpeta base que los CSV):
+
+   `%USERPROFILE%\ProyectoEstadistico\sqlserver.properties` (Windows)  
+   `~/ProyectoEstadistico/sqlserver.properties` (Linux / macOS)
+
+   Copia `sqlserver.properties.example` del repositorio a esa ruta, renómbralo a `sqlserver.properties` y edita valores. **No subas** `sqlserver.properties` a Git (está en `.gitignore` si lo pones en la raíz del proyecto; el path por defecto es fuera del repo).
+
+Ejemplo PowerShell solo con entorno:
+
+```powershell
+$env:SQLSERVER_HOST = "localhost"
+$env:SQLSERVER_DATABASE = "DatosMexico"
+$env:SQLSERVER_USER = "miUsuario"
+$env:SQLSERVER_PASSWORD = "miContraseña"
+java -cp "target/reporte-graficas-pdf-1.0-SNAPSHOT.jar;target/dependency/*" com.proyectoestadistico.ui.MainApp
+```
+
+Si no hay host/usuario/contraseña configurados, la aplicación mostrará un error claro al intentar guardar en BD.
 
 ## Dependencias principales (Maven)
 

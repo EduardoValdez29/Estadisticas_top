@@ -128,10 +128,13 @@ GeminiIntroduccionService
 7. DATABASE — SQL SERVER
 --------------------------------------------------------------------------------
 ConexionSQLServer.getConnection()
-  - JDBC URL: jdbc:sqlserver://host:1433;databaseName=...;encrypt=true;
-    trustServerCertificate=true
-  - Credentials are currently literals in code (only acceptable in controlled
-    environments; use env vars or a secret store in production).
+  - JDBC URL: jdbc:sqlserver://host:port;databaseName=...;encrypt=...;
+    trustServerCertificate=...
+  - Configuration (env overrides file): SQLSERVER_HOST, SQLSERVER_PORT,
+    SQLSERVER_DATABASE, SQLSERVER_USER, SQLSERVER_PASSWORD, SQLSERVER_ENCRYPT,
+    SQLSERVER_TRUST_SERVER_CERTIFICATE; or ~/ProyectoEstadistico/sqlserver.properties
+    (UTF-8). See sqlserver.properties.example in the repo. In-memory cache;
+    limpiarCacheConfig() to reload.
 
 DAOIndicadoresSQLServer
   - crearTablaSiNoExiste: creates dbo.INEGI_Indicadores if missing.

@@ -1,0 +1,10 @@
+# Credenciales locales (si alguien copia el properties al repo)
+sqlserver.properties
+
+# Maven / IDE
+target/
+.idea/
+*.iml
+.classpath
+.project
+.settings/

@@ -1,0 +1,15 @@
+# Copiar a: Windows  %USERPROFILE%\ProyectoEstadistico\sqlserver.properties
+#           Linux/macOS  ~/ProyectoEstadistico/sqlserver.properties
+#
+# Renombrar este ejemplo y rellenar (sin subir el archivo real a Git).
+# Las variables de entorno SQLSERVER_* tienen prioridad sobre estos valores.
+
+sqlserver.host=localhost
+sqlserver.port=1433
+sqlserver.database=TuBaseDeDatos
+sqlserver.user=tu_usuario
+sqlserver.password=tu_contraseña
+
+# Opcionales (true recomendado para entornos sin certificado TLS completo en el servidor)
+sqlserver.encrypt=true
+sqlserver.trustServerCertificate=true
