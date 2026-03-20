@@ -123,15 +123,12 @@ public class GeneradorPDF {
             return;
         }
 
-        // Tabla con una columna por cada encabezado
         Table table = new Table(tabla.getNumeroColumnas());
 
-        // Encabezados
         for (String header : tabla.getEncabezados()) {
             table.addHeaderCell(header);
         }
 
-        // Filas
         for (var fila : tabla.getFilas()) {
             for (String valor : fila) {
                 table.addCell(valor);

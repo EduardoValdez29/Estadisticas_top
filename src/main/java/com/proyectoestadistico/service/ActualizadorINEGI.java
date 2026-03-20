@@ -32,14 +32,12 @@ public class ActualizadorINEGI {
         Map<String, Path> csvPorCategoria = new HashMap<>();
         List<ConfigINEGI.GrupoDef> grupos = ConfigINEGI.grupos();
 
-        // 1) Descargamos y generamos CSVs primero (para no mezclar persistencia parcial).
         for (ConfigINEGI.GrupoDef grupo : grupos) {
             JsonNode root = obtenerJsonConReintentos(grupo.url(), 3);
             Path csv = generadorCSV.generarCsvDesdeJson(root, grupo, carpetaSalida);
             csvPorCategoria.put(grupo.categoria(), csv);
         }
 
-        // 2) Si se solicita, persistimos en BD.
         if (persistirEnBD) {
             try (Connection conn = ConexionSQLServer.getConnection()) {
                 DAOIndicadoresSQLServer dao = new DAOIndicadoresSQLServer();
@@ -63,7 +61,6 @@ public class ActualizadorINEGI {
                 return httpClient.obtenerJson(url);
             } catch (Exception e) {
                 last = e;
-                // reintento con backoff simple
                 try {
                     long sleepMs = 800L * i;
                     Thread.sleep(sleepMs);

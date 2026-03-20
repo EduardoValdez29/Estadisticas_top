@@ -17,14 +17,6 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.CategoryAxis;
 
-/**
- * Genera 3 tipos de gráficas diferentes (no pastel, no histograma):
- * 1) Gráfica de barras
- * 2) Gráfica de líneas
- * 3) Gráfica de dispersión (XY)
- *
- * Se asume que hay al menos una columna categórica (X) y una numérica (Y).
- */
 public class GeneradorGraficas {
 
     private static final java.awt.Color BG0 = new java.awt.Color(0x0B1020);
@@ -99,9 +91,6 @@ public class GeneradorGraficas {
         }
     }
 
-    /**
-     * Usa la primera columna como X (categoría) y la segunda como Y (numérica).
-     */
     private DefaultCategoryDataset crearDatasetCategoria(TablaDatos tabla) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         if (tabla.getNumeroColumnas() < 2) {
@@ -114,8 +103,7 @@ public class GeneradorGraficas {
             try {
                 double valor = Double.parseDouble(valorStr);
                 dataset.addValue(valor, serie, categoria);
-            } catch (NumberFormatException ex) {
-                // ignora filas no numéricas
+            } catch (NumberFormatException ignored) {
             }
         }
         return dataset;
@@ -137,8 +125,7 @@ public class GeneradorGraficas {
                 try {
                     double valor = Double.parseDouble(valorStr);
                     dataset.addValue(valor, serie, formatearCategoria(categoria));
-                } catch (NumberFormatException ex) {
-                    // ignora filas no numéricas
+                } catch (NumberFormatException ignored) {
                 }
             }
         }
@@ -166,8 +153,7 @@ public class GeneradorGraficas {
                 double x = Double.parseDouble(fila.get(0));
                 double y = Double.parseDouble(fila.get(1));
                 serie.add(x, y);
-            } catch (NumberFormatException ex) {
-                // ignora filas no numéricas
+            } catch (NumberFormatException ignored) {
             }
         }
         dataset.addSeries(serie);
@@ -193,7 +179,6 @@ public class GeneradorGraficas {
                 try {
                     x = Double.parseDouble(fila.get(0));
                 } catch (NumberFormatException ex) {
-                    // Si X es categórica, usamos el índice para dispersión
                     x = idx;
                 }
                 try {

@@ -13,8 +13,6 @@ import java.time.Duration;
 
 public class GeminiIntroduccionService {
 
-    // Token proporcionado por el usuario (para un proyecto académico).
-    // Evita publicarlo en repos públicos.
     private static final String GEMINI_API_KEY_FALLBACK = "AIzaSyDwUvXnQv2BCzVLTtrXqx_8-4BrklUHbFs";
     private static final String MODEL = "gemini-3.1-flash-lite-preview";
 
@@ -37,7 +35,6 @@ public class GeminiIntroduccionService {
             return "Introducción no disponible (Gemini sin token).";
         }
 
-        // Prompt genérico y enfocado al indicador seleccionado.
         String prompt = ""
                 + "Genera un texto introductorio breve (maximo 750 caracteres) en espanol para acompañar "
                 + "un reporte con graficas de barras, lineas y dispersion, y una tabla, enfocado en el indicador: "
@@ -60,7 +57,6 @@ public class GeminiIntroduccionService {
             parts.add(part0);
             contents.add(content0);
 
-            // Límite de salida (aprox) para mantenernos cerca de 750 caracteres.
             ObjectNode genCfg = root.putObject("generationConfig");
             genCfg.put("temperature", 0.4);
             genCfg.put("maxOutputTokens", 250);
@@ -92,7 +88,6 @@ public class GeminiIntroduccionService {
     }
 
     private static String obtenerApiKey() {
-        // Si existe, priorizamos una variable de entorno.
         String env = System.getenv("GEMINI_API_KEY");
         if (env != null && !env.isBlank()) return env.trim();
         return GEMINI_API_KEY_FALLBACK;

@@ -1,0 +1,147 @@
+================================================================================
+  MANUAL DE USUARIO
+  Proyecto Estadístico — Reporte, gráficas y PDF (datos INEGI)
+  Versión documentada: alineada con la aplicación Java Swing actual
+================================================================================
+
+1. PARA QUÉ SIRVE ESTA APLICACIÓN
+--------------------------------------------------------------------------------
+Permite bajar del INEGI (Instituto Nacional de Estadística y Geografía de
+México) datos de indicadores ya configurados en el programa, verlos en tablas
+y en tres tipos de gráficas (barras, líneas y dispersión), y guardar un informe
+en PDF que incluye una breve introducción generada automáticamente (servicio
+Gemini de Google), si hay conexión a Internet y clave API disponible.
+
+No necesita abrir archivos CSV a mano: el programa los genera al actualizar
+los datos.
+
+
+2. QUÉ NECESITA SU EQUIPO
+--------------------------------------------------------------------------------
+  - Java 17 o superior instalado (el mismo que use quien le entregó el programa).
+  - Conexión a Internet para:
+      * descargar datos del INEGI al pulsar "Actualizar datos (INEGI)";
+      * generar el texto introductorio del PDF (Gemini), si aplica.
+  - Si activa "Guardar en BD (SQL Server)", además debe tener accesible el
+    servidor SQL configurado por quien instaló el proyecto (no es obligatorio
+    para solo ver tablas y gráficas en pantalla).
+
+
+3. CÓMO INICIAR EL PROGRAMA
+--------------------------------------------------------------------------------
+Normalmente quien desarrolla el proyecto ejecuta la aplicación desde consola
+tras compilar con Maven. Si usted recibió solo un archivo .jar y librerías,
+siga las instrucciones que le dieron con el paquete.
+
+Al abrirse la ventana principal verá:
+  - Arriba: título, combo "Categoría", casilla "Guardar en BD (SQL Server)",
+    botón "Actualizar datos (INEGI)", botón "Generar PDF" y un indicador de
+    estado (etiqueta de color).
+  - En el centro, partido en dos zonas:
+      * arriba: tres pestañas de TABLAS;
+      * abajo: tres pestañas de GRÁFICAS (Barras, Líneas, Dispersión).
+
+
+4. FLUJO DE TRABAJO RECOMENDADO
+--------------------------------------------------------------------------------
+
+  Paso 1 — Decidir si guarda en base de datos
+  - Si NO dispone de SQL Server o no desea grabar datos: desmarque
+    "Guardar en BD (SQL Server)".
+  - Si su entorno está configurado para SQL Server y desea historizar datos
+    en la base: deje la casilla marcada (por defecto suele estar marcada).
+
+  Paso 2 — Actualizar datos del INEGI
+  - Pulse "Actualizar datos (INEGI)".
+  - El botón puede desactivarse unos momentos mientras descarga. No cierre
+    la ventana.
+  - Si todo va bien, el estado mostrará que los datos se actualizaron (texto
+    en verde o mensaje equivalente). Si hay error, aparecerá un aviso.
+
+  Paso 3 — Elegir categoría
+  - En "Categoría" puede elegir entre: Educación, Población o Seguridad
+    (según la versión entregada).
+  - Al cambiar la categoría, las tablas y gráficas se actualizan para esos
+    datos.
+
+  Paso 4 — Revisar tablas
+  - Hay hasta tres pestañas de tabla. Cada una muestra una columna de periodo
+    (eje X) y un indicador (eje Y), derivados del conjunto de datos de la
+    categoría elegida.
+  - Las celdas numéricas se muestran con formato; la tabla es solo lectura.
+
+  Paso 5 — Revisar gráficas
+  - Pestaña "Barras": comparación por periodo o categoría según los datos.
+  - Pestaña "Líneas": evolución en el tiempo.
+  - Pestaña "Dispersión": relación entre los valores numéricos de la serie.
+
+  Paso 6 — Generar PDF (opcional)
+  - Pulse "Generar PDF".
+  - Elija carpeta y nombre del archivo. Si el archivo ya existe, el programa
+    puede preguntar si desea sobrescribirlo.
+  - El PDF incluirá la tabla correspondiente a la pestaña de tabla que tenga
+    seleccionada en ese momento, más las tres gráficas para esa misma serie,
+    más un texto introductorio corto (si el servicio Gemini responde bien).
+  - Espere a que termine el proceso; el botón puede desactivarse durante
+    la generación.
+
+
+5. DÓNDE SE GUARDAN LOS CSV EN SU COMPUTADORA
+--------------------------------------------------------------------------------
+Tras actualizar desde INEGI, el programa crea (si no existía) una carpeta
+similar a:
+
+  Usuario Windows:  C:\Users\<su_usuario>\ProyectoEstadistico\inegi_csv
+
+Allí encontrará archivos CSV por categoría (por ejemplo, nombres que incluyen
+"DatosMexico_" y el nombre de la categoría). Sirven como respaldo local de lo
+descargado; no hace falta abrirlos manualmente para usar la aplicación.
+
+
+6. MENSAJES Y PROBLEMAS FRECUENTES
+--------------------------------------------------------------------------------
+
+  "Error al actualizar" / descarga fallida
+  - Compruebe Internet. Vuelva a intentar más tarde si el servidor INEGI
+    está lento o caído.
+  - Si usa firewall corporativo, puede bloquear la dirección del API INEGI.
+
+  No se habilita "Generar PDF"
+  - Primero debe completar una actualización correcta y tener datos válidos
+    en pantalla (tablas y gráficas generadas).
+
+  Introducción del PDF dice que Gemini no está disponible o error HTTP
+  - Falta clave API, cuota agotada, o problema de red con Google. El resto
+    del PDF (tabla y gráficas) puede generarse igualmente según la versión;
+    revise el mensaje exacto en pantalla.
+
+  "Guardar en BD" falla
+  - El servidor SQL no está accesible, credenciales incorrectas, o la base
+    no está creada según lo previsto. Desmarque la casilla si solo necesita
+    ver datos en pantalla y CSV local. Para uso con BD, contacte a soporte
+    técnico o a quien configuró el servidor.
+
+  Pocas tablas o advertencia de columnas
+  - Algunos conjuntos de datos tienen menos indicadores; el programa solo
+    puede derivar tantas tablas como columnas de indicador haya además del
+    periodo.
+
+
+7. ATAJOS Y CONSEJOS
+--------------------------------------------------------------------------------
+  - Para un PDF centrado en un indicador concreto, seleccione la pestaña de
+    tabla de ese indicador antes de pulsar "Generar PDF".
+  - Las gráficas combinadas en pantalla usan las tres series derivadas; el PDF
+    usa la serie de la pestaña seleccionada para las tres vistas (barras,
+    líneas, dispersión) de ese mismo par X–Y.
+
+
+8. CONTACTO Y SOPORTE
+--------------------------------------------------------------------------------
+Consulte al autor del proyecto o al equipo que le entregó el ejecutable para
+temas de instalación de Java, Maven, SQL Server y claves API.
+
+
+================================================================================
+  FIN DEL MANUAL DE USUARIO
+================================================================================

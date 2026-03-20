@@ -1,0 +1,214 @@
+================================================================================
+  MANUAL TÉCNICO
+  Proyecto Estadístico — INEGI, Swing, JFreeChart, iText, SQL Server, Gemini
+  Artefacto Maven: reporte-graficas-pdf (groupId: com.proyectoestadistico)
+================================================================================
+
+1. VISIÓN GENERAL DEL SISTEMA
+--------------------------------------------------------------------------------
+Aplicación de escritorio (JDK 17) cuyo punto de entrada es:
+  com.proyectoestadistico.ui.MainApp
+
+Flujo de datos:
+  ConfigINEGI (URLs + metadatos de indicadores)
+       -> INegiHttpClient (HTTP GET, JSON)
+       -> GeneradorCSVDesdeINegi (normalización a CSV en disco, ISO-8859-1)
+       -> LectorCSV + TablaDatos (modelo en memoria)
+       -> derivación en MainApp: hasta 3 tablas (Periodo + Yi)
+       -> GeneradorGraficas (JFreeChart: barras, líneas, dispersión)
+       -> GeneradorPDF (iText 7) + GeminiIntroduccionService (texto intro)
+
+Persistencia opcional:
+       -> ConexionSQLServer + DAOIndicadoresSQLServer
+          (transacción por categoría: DELETE categoría + batch INSERT)
+
+
+2. REQUISITOS Y COMPILACIÓN
+--------------------------------------------------------------------------------
+  - JDK 17+
+  - Maven 3.6+
+
+  Compilar y empaquetar:
+    mvn clean package
+
+  El JAR generado NO es "fat JAR": las dependencias van aparte. Copiar libs:
+
+    mvn dependency:copy-dependencies -DoutputDirectory=target/dependency
+
+  Ejecución (Windows, separador ;):
+
+    java -cp "target/reporte-graficas-pdf-1.0-SNAPSHOT.jar;target/dependency/*" ^
+         com.proyectoestadistico.ui.MainApp
+
+  Linux/macOS: sustituir ";" por ":" en el classpath.
+
+  Manifest del JAR: Main-Class com.proyectoestadistico.ui.MainApp,
+  Class-Path con prefijo lib/ (útil si se distribuye con carpeta lib/ manual).
+
+
+3. DEPENDENCIAS (pom.xml)
+--------------------------------------------------------------------------------
+  - org.jfree:jfreechart — gráficas
+  - com.itextpdf:itext7-core (type pom) — núcleo iText 7 (BOM transitivo)
+  - org.apache.commons:commons-csv — lectura/escritura CSV
+  - com.fasterxml.jackson.core:jackson-databind — parseo JSON INEGI
+  - com.microsoft.sqlserver:mssql-jdbc — JDBC SQL Server
+
+
+4. CONFIGURACIÓN — INEGI
+--------------------------------------------------------------------------------
+Fuente: com.proyectoestadistico.service.ConfigINEGI
+
+  - Define tres GrupoDef: Educación, Población, Seguridad.
+  - Cada grupo tiene:
+      * categoria (nombre mostrado en UI y clave lógica)
+      * url — API BISE INEGI (token embebido en URL en la versión actual)
+      * indicadores: lista IndicadorDef(codigo, nombre)
+
+  Método grupos() devuelve el orden de procesamiento en ActualizadorINEGI.
+
+Cliente HTTP: INegiHttpClient
+  - java.net.http.HttpClient, GET, Accept application/json
+  - connectTimeout 30 s; respuesta parseada con ObjectMapper a JsonNode
+
+Reintentos: ActualizadorINEGI.obtenerJsonConReintentos (3 intentos, backoff
+lineal ~800 ms * i).
+
+Generación CSV: GeneradorCSVDesdeINegi
+  - Espera nodo raíz con array "Series".
+  - Por cada serie: INDICADOR, OBSERVATIONS[] con TIME_PERIOD y OBS_VALUE.
+  - Une periodos, orden numérico si aplica, sino lexicográfico.
+  - Cabecera CSV: "Periodo" + nombres de indicadores en orden del GrupoDef.
+  - Charset salida: ISO_8859_1.
+  - Ruta: carpetaSalida / "DatosMexico_<categoria_sanitizada>.csv"
+    (ver ConfigINEGI.nombreArchivoCsv).
+
+ActualizadorINEGI.actualizar(persistirEnBD, carpetaSalida):
+  1) Para cada grupo: JSON -> CSV (sin transacción BD mezclada).
+  2) Si persistirEnBD: una Connection por try-with-resources, DAO por CSV.
+
+
+5. CAPA DE PRESENTACIÓN (Swing)
+--------------------------------------------------------------------------------
+MainApp
+  - SwingWorker para no bloquear EDT en descarga INEGI y en generación PDF.
+  - Look and feel: Nimbus si está instalado (main()).
+  - Tema: UITheme (colores, bordes redondeados, tabs tipo "chip").
+
+Lógica de tablas derivadas: derivarTresTablas(TablaDatos original)
+  - Columna 0: eje X (encabezado preservado).
+  - Columnas 1..3: cada una genera TablaDatos de 2 columnas (X, Y).
+  - Si hay menos de 4 columnas en el CSV ancho, menos pestañas pobladas.
+
+Gráficas en pantalla: combinadas desde lista de TablaDatos (tres series).
+PDF: gráficas y una sola TablaDatos (par X–Y) según pestaña seleccionada.
+
+Formateo celdas: números alineados a la derecha, 3 decimales (Locale US).
+
+
+6. SERVICIOS AUXILIARES
+--------------------------------------------------------------------------------
+LectorCSV — carga TablaDatos desde Path (Apache Commons CSV).
+
+GeneradorGraficas — JFreeChart (barras, líneas, dispersión sobre TablaDatos
+  o lista de tablas; ver implementación para reglas de tipos de dataset).
+
+GeneradorPDF — iText 7: documento con introducción, tabla y capturas de
+  gráficas (raster desde JFreeChart en el servicio; ver clase para detalle).
+
+GeminiIntroduccionService
+  - Endpoint REST v1beta generateContent.
+  - Modelo configurado en código (constante MODEL en la clase).
+  - API key: System.getenv("GEMINI_API_KEY"); si vacío, fallback en constante
+    (riesgo de seguridad en repo público — externalizar).
+  - Límite salida truncado a 750 caracteres en cliente.
+  - temperature ~0.4, maxOutputTokens 250 en payload.
+
+
+7. BASE DE DATOS — SQL SERVER
+--------------------------------------------------------------------------------
+ConexionSQLServer.getConnection()
+  - JDBC URL: jdbc:sqlserver://host:1433;databaseName=...;encrypt=true;
+    trustServerCertificate=true
+  - Credenciales actualmente literales en código (solo aceptable en entorno
+    controlado; usar env o secret store en producción).
+
+DAOIndicadoresSQLServer
+  - crearTablaSiNoExiste: tabla dbo.INEGI_Indicadores si no existe.
+    Columnas:
+      Categoria NVARCHAR(50) NOT NULL
+      IndicadorCodigo NVARCHAR(20) NOT NULL
+      IndicadorDescripcion NVARCHAR(200) NULL
+      Periodo NVARCHAR(20) NOT NULL
+      Valor DECIMAL(38,20) NULL
+      PK compuesta: (Categoria, IndicadorCodigo, Periodo)
+
+  - actualizarCategoriaDesdeCsv:
+      * Valida número columnas CSV = 1 + grupo.indicadores().size()
+      * setAutoCommit(false); DELETE WHERE Categoria = ?;
+      * INSERT por fila e indicador con valor no blanco; executeBatch; commit
+      * rollback en error.
+
+Parseo numérico: quita comas; BigDecimal desde string.
+
+
+8. MODELO DE DATOS EN MEMORIA
+--------------------------------------------------------------------------------
+TablaDatos
+  - List<String> encabezados
+  - List<List<String>> filas
+  - Sin tipado fuerte por columna: todo String hasta graficar/PDF.
+
+
+9. CONTRATO JSON INEGI (RESUMEN)
+--------------------------------------------------------------------------------
+Estructura mínima esperada por GeneradorCSVDesdeINegi:
+
+  {
+    "Series": [
+      {
+        "INDICADOR": "<codigo>",
+        "OBSERVATIONS": [
+          {
+            "TIME_PERIOD": "<periodo>",
+            "OBS_VALUE": "<valor como texto>"
+          }
+        ]
+      }
+    ]
+  }
+
+Si falta Series, OBSERVATIONS o periodos, se lanza IOException con mensaje
+descriptivo.
+
+
+10. SEGURIDAD Y BUENAS PRÁCTICAS
+--------------------------------------------------------------------------------
+  - Rotar tokens INEGI en URL si se filtran; valorar variables de entorno.
+  - No versionar GEMINI_API_KEY ni password SQL; usar env / fichero ignorado.
+  - trustServerCertificate=true facilita dev; en producción usar certificados
+    válidos y revisar política encrypt.
+
+  - Actualizar README y distribución si se añade fat JAR o plugin exec.
+
+
+11. ESTRUCTURA DE PAQUETES (código fuente)
+--------------------------------------------------------------------------------
+  com.proyectoestadistico.ui          MainApp, UITheme
+  com.proyectoestadistico.model       TablaDatos
+  com.proyectoestadistico.service     INEGI, CSV, gráficas, PDF, Gemini
+  com.proyectoestadistico.db          ConexionSQLServer, DAOIndicadoresSQLServer
+
+
+12. AMPLIACIONES TÍPICAS
+--------------------------------------------------------------------------------
+  - Añadir GrupoDef en ConfigINEGI + entrada en grupos().
+  - Internacionalización UI (ResourceBundle).
+  - Externalizar credenciales y URLs a application.properties + filtering Maven.
+  - maven-shade-plugin o classpath-jar para un solo artefacto ejecutable.
+  - Tests unitarios: GeneradorCSVDesdeINegi con JSON de muestra en resources.
+
+
+================================================================================
+  FIN DEL MANUAL TÉCNICO
+================================================================================

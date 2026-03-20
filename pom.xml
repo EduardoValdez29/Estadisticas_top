@@ -18,14 +18,12 @@
     </properties>
 
     <dependencies>
-        <!-- Gráficas -->
         <dependency>
             <groupId>org.jfree</groupId>
             <artifactId>jfreechart</artifactId>
             <version>${jfreechart.version}</version>
         </dependency>
 
-        <!-- PDF (iText 7 core) -->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>itext7-core</artifactId>
@@ -33,21 +31,18 @@
             <type>pom</type>
         </dependency>
 
-        <!-- Lectura de CSV -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>${commons.csv.version}</version>
         </dependency>
 
-        <!-- Parseo JSON (INEGI) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.18.4</version>
         </dependency>
 
-        <!-- SQL Server JDBC -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>

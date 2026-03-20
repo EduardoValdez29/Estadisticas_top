@@ -3,11 +3,6 @@ package com.proyectoestadistico.model;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Representa una tabla genérica leída desde un CSV:
- * - primera fila: encabezados
- * - filas siguientes: datos como texto
- */
 public class TablaDatos {
 
     private final List<String> encabezados = new ArrayList<>();

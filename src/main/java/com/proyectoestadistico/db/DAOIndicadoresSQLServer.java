@@ -55,7 +55,6 @@ public class DAOIndicadoresSQLServer {
         try {
             crearTablaSiNoExiste(conn);
 
-            // Actualización: limpiamos la categoría completa antes de insertar.
             try (PreparedStatement del = conn.prepareStatement(
                     "DELETE FROM dbo.INEGI_Indicadores WHERE Categoria = ?")) {
                 del.setString(1, grupo.categoria());
@@ -80,7 +79,7 @@ public class DAOIndicadoresSQLServer {
                         String valorStr = fila.size() > i + 1 ? fila.get(i + 1) : "";
                         if (valorStr == null) valorStr = "";
                         valorStr = valorStr.trim();
-                        if (valorStr.isBlank()) continue; // guardamos sólo valores presentes
+                        if (valorStr.isBlank()) continue;
 
                         BigDecimal valor = parseBigDecimal(valorStr);
                         ConfigINEGI.IndicadorDef ind = grupo.indicadores().get(i);
@@ -110,8 +109,6 @@ public class DAOIndicadoresSQLServer {
     }
 
     private static BigDecimal parseBigDecimal(String raw) {
-        // La API típicamente manda valores con '.' como decimal.
-        // Por si acaso, eliminamos separadores de miles.
         String v = raw.replace(",", "").trim();
         if (v.isBlank()) return null;
         return new BigDecimal(v);

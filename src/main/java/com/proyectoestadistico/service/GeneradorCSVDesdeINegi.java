@@ -40,9 +40,7 @@ public class GeneradorCSVDesdeINegi {
             throw new IOException("JSON INEGI inválido: falta nodo 'Series' o no es array");
         }
 
-        // indicadorCodigo -> (periodo -> valor)
         Map<String, Map<String, String>> valores = new HashMap<>();
-        // Periodos completos (unión)
         Set<String> periodos = new LinkedHashSet<>();
 
         for (JsonNode serieNode : series) {
@@ -85,7 +83,6 @@ public class GeneradorCSVDesdeINegi {
             }
         });
 
-        // Encabezados: Periodo + nombres de indicadores en orden
         List<String> encabezados = new ArrayList<>();
         encabezados.add(HEADER_PERIODO);
         for (ConfigINEGI.IndicadorDef ind : grupo.indicadores()) {
@@ -124,7 +121,6 @@ public class GeneradorCSVDesdeINegi {
 
     private static String sanitizeCsvValue(String v) {
         if (v == null) return "";
-        // Evita saltos de línea dentro del CSV
         return v.replace("\r", " ").replace("\n", " ").trim();
     }
 }

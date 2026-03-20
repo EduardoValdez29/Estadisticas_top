@@ -56,7 +56,6 @@ public class MainApp extends JFrame {
     }
 
     private void initUI() {
-        // Barra superior
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, theme.border),
@@ -133,14 +132,12 @@ public class MainApp extends JFrame {
         topPanel.add(tituloPanel, BorderLayout.WEST);
         topPanel.add(botonesPanel, BorderLayout.EAST);
 
-        // Panel principal dividido
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         splitPane.setResizeWeight(0.45);
         splitPane.setBorder(null);
         splitPane.setBackground(theme.bg0);
         splitPane.setDividerSize(8);
 
-        // Panel de tablas (3) en pestañas
         JTabbedPane tabsTablas = new JTabbedPane();
         tabsTablas.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         tabsTablas.setBackground(theme.bg0);
@@ -152,7 +149,6 @@ public class MainApp extends JFrame {
         splitPane.setTopComponent(crearCard(tabsTablas));
         estilizarTabs(tabsTablas);
 
-        // Panel de gráficas en pestañas
         JTabbedPane tabsGraficas = new JTabbedPane();
         tabsGraficas.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         tabsGraficas.setBackground(theme.bg0);
@@ -171,7 +167,6 @@ public class MainApp extends JFrame {
         getContentPane().add(topPanel, BorderLayout.NORTH);
         getContentPane().add(splitPane, BorderLayout.CENTER);
 
-        // Guarda referencia en client properties para poder actualizar luego
         getRootPane().putClientProperty("tabsGraficas", tabsGraficas);
         getRootPane().putClientProperty("tabsTablas", tabsTablas);
         actualizarEstadoBotonPdf(false);
@@ -409,7 +404,6 @@ public class MainApp extends JFrame {
         JTabbedPane tabsTablas = (JTabbedPane) getRootPane().getClientProperty("tabsTablas");
         if (tabsTablas == null) return;
 
-        // Si por alguna razón no hay derivadas, al menos mostramos el CSV original en la 1ra pestaña
         java.util.List<TablaDatos> aMostrar = (tablasDerivadas == null || tablasDerivadas.isEmpty())
                 ? java.util.List.of(tablaDatosOriginal)
                 : tablasDerivadas;
@@ -449,7 +443,7 @@ public class MainApp extends JFrame {
         table.setSelectionForeground(theme.text);
         table.setShowGrid(true);
         table.setAutoCreateRowSorter(true);
-        table.setDefaultEditor(Object.class, null); // solo lectura
+        table.setDefaultEditor(Object.class, null);
         table.setDefaultRenderer(Object.class, crearRendererCeldas());
 
         var tableHeader = table.getTableHeader();
@@ -525,7 +519,6 @@ public class MainApp extends JFrame {
             return java.util.Collections.emptyList();
         }
 
-        // Convención: col 0 es X; col 1..3 son Y1..Y3 (si existen).
         int xCol = 0;
         int[] yCols = new int[]{1, 2, 3};
         java.util.List<TablaDatos> out = new java.util.ArrayList<>();
@@ -596,7 +589,6 @@ public class MainApp extends JFrame {
         } catch (Exception ignored) {
         }
 
-        // Generamos el PDF en background porque llamamos a Gemini.
         btnGenerarPdf.setEnabled(false);
         SwingWorker<Void, Void> worker = new SwingWorker<>() {
             Exception error;
@@ -608,10 +600,8 @@ public class MainApp extends JFrame {
                     String categoria = obtenerCategoriaSeleccionada();
                     String indicador = obtenerIndicadorSeleccionadoParaPdf();
 
-                    // Gemini texto corto (<= 750 caracteres)
                     String introduccion = geminiIntroduccionService.generarIntroduccion(categoria, indicador);
 
-                    // Graficas y tabla del indicador seleccionado
                     JFreeChart barrasSel = generadorGraficas.crearGraficaBarras(tablaSeleccionada);
                     JFreeChart lineasSel = generadorGraficas.crearGraficaLineas(tablaSeleccionada);
                     JFreeChart dispSel = generadorGraficas.crearGraficaDispersión(tablaSeleccionada);
@@ -774,7 +764,6 @@ public class MainApp extends JFrame {
         }
 
         if (c instanceof JPanel p) {
-            // Muchos paneles internos de JOptionPane vienen grises: forzamos oscuro
             p.setBackground(theme.bg0);
         } else if (c instanceof JLabel l) {
             l.setForeground(theme.text);
@@ -975,7 +964,6 @@ public class MainApp extends JFrame {
             if (file == null || dir == null) return null;
             return Path.of(dir, file);
         } catch (Exception ex) {
-            // Fallback a JFileChooser si el diálogo nativo no está disponible
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle(titulo);
             int result = chooser.showOpenDialog(this);
@@ -993,7 +981,6 @@ public class MainApp extends JFrame {
             String dir = dialog.getDirectory();
             if (file == null || dir == null) return null;
             Path p = Path.of(dir, file);
-            // Si no trae extensión, la agregamos para PDF
             if (!p.getFileName().toString().toLowerCase().endsWith(".pdf")) {
                 p = Path.of(dir, p.getFileName().toString() + ".pdf");
             }
@@ -1011,7 +998,6 @@ public class MainApp extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                // Nimbus respeta mucho mejor los colores (ideal para tema oscuro)
                 for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                     if ("Nimbus".equals(info.getName())) {
                         UIManager.setLookAndFeel(info.getClassName());

@@ -16,8 +16,6 @@ public class LectorCSV {
     public TablaDatos leer(Path rutaCsv) throws IOException {
         TablaDatos tabla = new TablaDatos();
 
-        // Usamos ISO_8859_1 que acepta cualquier byte 0-255 (típico CSV de Excel en español)
-        // y así evitamos "MalformedInputException: Input length = 1".
         try (Reader reader = Files.newBufferedReader(rutaCsv, StandardCharsets.ISO_8859_1);
              CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())) {
 

@@ -6,15 +6,15 @@ import java.awt.*;
 
 public final class UITheme {
 
-    public final Color bg0 = new Color(0x0B1020);      // fondo principal
-    public final Color bg1 = new Color(0x0F1630);      // superficie
-    public final Color bg2 = new Color(0x141F3D);      // superficie elevada
-    public final Color border = new Color(0x23345A);   // bordes
+    public final Color bg0 = new Color(0x0B1020);
+    public final Color bg1 = new Color(0x0F1630);
+    public final Color bg2 = new Color(0x141F3D);
+    public final Color border = new Color(0x23345A);
 
-    public final Color text = new Color(0xE6F1FF);     // texto principal
-    public final Color muted = new Color(0x8AA0C7);    // texto secundario
+    public final Color text = new Color(0xE6F1FF);
+    public final Color muted = new Color(0x8AA0C7);
 
-    public final Color neonCyan = new Color(0x00E5FF); // primario
+    public final Color neonCyan = new Color(0x00E5FF);
     public final Color neonMagenta = new Color(0xFF2D95);
     public final Color neonGreen = new Color(0x39FF88);
     public final Color neonPurple = new Color(0x7C4DFF);
@@ -68,7 +68,6 @@ public final class UITheme {
         UIManager.put("ToolTip.border", BorderFactory.createLineBorder(t.border));
         UIManager.put("ToolTip.font", UIManager.getFont("Label.font"));
 
-        // JOptionPane (diálogos) - tema oscuro consistente
         Font dialogFont = UIManager.getFont("Label.font");
         if (dialogFont != null) {
             UIManager.put("OptionPane.messageFont", dialogFont.deriveFont(Font.PLAIN, 12f));
@@ -86,7 +85,6 @@ public final class UITheme {
 
         UIManager.put("Label.font", dialogFont);
 
-        // Iconos neón personalizados para los diálogos
         UIManager.put("OptionPane.informationIcon", new NeonCircleIcon(t.neonCyan, t.bg0));
         UIManager.put("OptionPane.questionIcon", new NeonCircleIcon(t.neonPurple, t.bg0));
         UIManager.put("OptionPane.errorIcon", new NeonCircleIcon(t.danger, t.bg0));
