@@ -1,0 +1,214 @@
+================================================================================
+  TECHNICAL MANUAL
+  Statistical Project — INEGI, Swing, JFreeChart, iText, SQL Server, Gemini
+  Maven artifact: reporte-graficas-pdf (groupId: com.proyectoestadistico)
+================================================================================
+
+1. SYSTEM OVERVIEW
+--------------------------------------------------------------------------------
+Desktop application (JDK 17) whose entry point is:
+  com.proyectoestadistico.ui.MainApp
+
+Data flow:
+  ConfigINEGI (URLs + indicator metadata)
+       -> INegiHttpClient (HTTP GET, JSON)
+       -> GeneradorCSVDesdeINegi (normalize to on-disk CSV, ISO-8859-1)
+       -> LectorCSV + TablaDatos (in-memory model)
+       -> derivation in MainApp: up to 3 tables (Period + Yi)
+       -> GeneradorGraficas (JFreeChart: bar, line, scatter)
+       -> GeneradorPDF (iText 7) + GeminiIntroduccionService (intro text)
+
+Optional persistence:
+       -> ConexionSQLServer + DAOIndicadoresSQLServer
+          (per-category transaction: DELETE category + batch INSERT)
+
+
+2. REQUIREMENTS AND BUILD
+--------------------------------------------------------------------------------
+  - JDK 17+
+  - Maven 3.6+
+
+  Compile and package:
+    mvn clean package
+
+  The generated JAR is NOT a “fat JAR”: dependencies are separate. Copy libraries:
+
+    mvn dependency:copy-dependencies -DoutputDirectory=target/dependency
+
+  Run (Windows, classpath separator ;):
+
+    java -cp "target/reporte-graficas-pdf-1.0-SNAPSHOT.jar;target/dependency/*" ^
+         com.proyectoestadistico.ui.MainApp
+
+  Linux/macOS: replace “;” with “:” in the classpath.
+
+  JAR manifest: Main-Class com.proyectoestadistico.ui.MainApp,
+  Class-Path with lib/ prefix (useful when distributing with a manual lib/ folder).
+
+
+3. DEPENDENCIES (pom.xml)
+--------------------------------------------------------------------------------
+  - org.jfree:jfreechart — charts
+  - com.itextpdf:itext7-core (type pom) — iText 7 core (transitive BOM)
+  - org.apache.commons:commons-csv — CSV read/write
+  - com.fasterxml.jackson.core:jackson-databind — INEGI JSON parsing
+  - com.microsoft.sqlserver:mssql-jdbc — SQL Server JDBC
+
+
+4. CONFIGURATION — INEGI
+--------------------------------------------------------------------------------
+Source: com.proyectoestadistico.service.ConfigINEGI
+
+  - Defines three GrupoDef records: Educación, Población, Seguridad.
+  - Each group has:
+      * categoria (label shown in the UI and logical key)
+      * url — INEGI BISE API (token embedded in URL in the current version)
+      * indicadores: list of IndicadorDef(codigo, nombre)
+
+  grupos() returns the processing order used by ActualizadorINEGI.
+
+HTTP client: INegiHttpClient
+  - java.net.http.HttpClient, GET, Accept application/json
+  - connect timeout 30 s; body parsed with ObjectMapper to JsonNode
+
+Retries: ActualizadorINEGI.obtenerJsonConReintentos (3 attempts, linear backoff
+~800 ms * i).
+
+CSV generation: GeneradorCSVDesdeINegi
+  - Expects root node containing a “Series” array.
+  - For each series: INDICADOR, OBSERVATIONS[] with TIME_PERIOD and OBS_VALUE.
+  - Union of periods; numeric sort when applicable, otherwise lexicographic.
+  - CSV header: “Periodo” + indicator names in GrupoDef order.
+  - Output charset: ISO_8859_1.
+  - Path: carpetaSalida / “DatosMexico_<sanitized_category>.csv”
+    (see ConfigINEGI.nombreArchivoCsv).
+
+ActualizadorINEGI.actualizar(persistirEnBD, carpetaSalida):
+  1) For each group: JSON -> CSV (no mixed DB transaction in this phase).
+  2) If persistirEnBD: one Connection in try-with-resources, DAO per CSV.
+
+
+5. PRESENTATION LAYER (SWING)
+--------------------------------------------------------------------------------
+MainApp
+  - SwingWorker to avoid blocking the EDT during INEGI download and PDF generation.
+  - Look and feel: Nimbus when available (main()).
+  - Theme: UITheme (colors, rounded borders, chip-style tabs).
+
+Derived table logic: derivarTresTablas(TablaDatos original)
+  - Column 0: X axis (header preserved).
+  - Columns 1..3: each yields a two-column TablaDatos (X, Y).
+  - If the wide CSV has fewer than 4 columns, fewer tabs are populated.
+
+On-screen charts: combined from a list of TablaDatos (three series).
+PDF: charts and a single TablaDatos (X–Y pair) according to the selected tab.
+
+Cell formatting: numbers right-aligned, 3 decimal places (US locale).
+
+
+6. SUPPORTING SERVICES
+--------------------------------------------------------------------------------
+LectorCSV — load TablaDatos from Path (Apache Commons CSV).
+
+GeneradorGraficas — JFreeChart (bar, line, scatter from TablaDatos or list of
+  tables; see implementation for dataset rules).
+
+GeneradorPDF — iText 7: document with introduction, table, and chart images
+  (rasterized from JFreeChart in the service; see class for details).
+
+GeminiIntroduccionService
+  - REST endpoint v1beta generateContent.
+  - Model name stored in code (MODEL constant in the class).
+  - API key: System.getenv("GEMINI_API_KEY"); if empty, constant fallback
+    (unsafe in public repos — externalize).
+  - Client truncates output to 750 characters.
+  - temperature ~0.4, maxOutputTokens 250 in payload.
+
+
+7. DATABASE — SQL SERVER
+--------------------------------------------------------------------------------
+ConexionSQLServer.getConnection()
+  - JDBC URL: jdbc:sqlserver://host:1433;databaseName=...;encrypt=true;
+    trustServerCertificate=true
+  - Credentials are currently literals in code (only acceptable in controlled
+    environments; use env vars or a secret store in production).
+
+DAOIndicadoresSQLServer
+  - crearTablaSiNoExiste: creates dbo.INEGI_Indicadores if missing.
+    Columns:
+      Categoria NVARCHAR(50) NOT NULL
+      IndicadorCodigo NVARCHAR(20) NOT NULL
+      IndicadorDescripcion NVARCHAR(200) NULL
+      Periodo NVARCHAR(20) NOT NULL
+      Valor DECIMAL(38,20) NULL
+      Composite PK: (Categoria, IndicadorCodigo, Periodo)
+
+  - actualizarCategoriaDesdeCsv:
+      * Validates CSV column count = 1 + grupo.indicadores().size()
+      * setAutoCommit(false); DELETE WHERE Categoria = ?;
+      * INSERT per row and indicator when value is non-blank; executeBatch; commit
+      * rollback on error.
+
+Numeric parsing: strip commas; BigDecimal from string.
+
+
+8. IN-MEMORY DATA MODEL
+--------------------------------------------------------------------------------
+TablaDatos
+  - List<String> encabezados
+  - List<List<String>> filas
+  - No strong column typing: everything is String until chart/PDF rendering.
+
+
+9. INEGI JSON CONTRACT (SUMMARY)
+--------------------------------------------------------------------------------
+Minimum structure expected by GeneradorCSVDesdeINegi:
+
+  {
+    "Series": [
+      {
+        "INDICADOR": "<code>",
+        "OBSERVATIONS": [
+          {
+            "TIME_PERIOD": "<period>",
+            "OBS_VALUE": "<value as text>"
+          }
+        ]
+      }
+    ]
+  }
+
+If Series, OBSERVATIONS, or periods are missing, an IOException is thrown with a
+descriptive message.
+
+
+10. SECURITY AND PRACTICES
+--------------------------------------------------------------------------------
+  - Rotate INEGI URL tokens if leaked; consider environment variables.
+  - Do not commit GEMINI_API_KEY or SQL passwords; use env vars or ignored files.
+  - trustServerCertificate=true helps in dev; in production use valid certs and
+    review encryption policy.
+
+  - Update README and packaging if you add a fat JAR or exec plugin.
+
+
+11. PACKAGE LAYOUT (SOURCE)
+--------------------------------------------------------------------------------
+  com.proyectoestadistico.ui          MainApp, UITheme
+  com.proyectoestadistico.model       TablaDatos
+  com.proyectoestadistico.service     INEGI, CSV, charts, PDF, Gemini
+  com.proyectoestadistico.db          ConexionSQLServer, DAOIndicadoresSQLServer
+
+
+12. TYPICAL EXTENSIONS
+--------------------------------------------------------------------------------
+  - Add a GrupoDef in ConfigINEGI + entry in grupos().
+  - UI internationalization (ResourceBundle).
+  - Externalize credentials and URLs to application.properties + Maven filtering.
+  - maven-shade-plugin or classpath JAR for a single runnable artifact.
+  - Unit tests: GeneradorCSVDesdeINegi with sample JSON under resources.
+
+
+================================================================================
+  END OF TECHNICAL MANUAL
+================================================================================

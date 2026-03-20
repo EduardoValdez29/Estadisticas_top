@@ -1,0 +1,286 @@
+================================================================================
+  MODELO DE NEGOCIO — PLAN DE EMPRESA
+  Producto: plataforma de indicadores estadísticos (INEGI) con visualización,
+           informes PDF e integración opcional a base de datos
+  Documento orientado a inversores, incubadoras o concursos de emprendimiento
+================================================================================
+
+
+1. PROPUESTA DE VALOR
+--------------------------------------------------------------------------------
+
+1.1 Problema que resuelve el software
+  • Las instituciones educativas, consultoras, medios y equipos de políticas
+    públicas en México necesitan consumir indicadores oficiales del INEGI de
+    forma recurrente. Hoy ese flujo suele implicar: buscar en el sitio del
+    instituto, descargar series, limpiar datos en Excel, repetir gráficas
+    manualmente y redactar informes. El proceso es lento, propenso a error y
+    poco escalable cuando se trabajan varias categorías (educación, población,
+    seguridad, etc.) en paralelo.
+  • El software automatiza la extracción vía API, la normalización a tablas
+    homogéneas, la generación coherente de gráficas (barras, líneas,
+    dispersión) y la exportación a PDF con texto introductorio asistido,
+    reduciendo horas de trabajo operativo a minutos.
+
+1.2 Qué lo hace único frente a la competencia
+  • Enfoque vertical México: integración nativa con el API de indicadores INEGI
+    y categorías preconfiguradas alineadas con debates públicos reales
+    (educación, población, seguridad), no un “dashboard genérico de CSV”.
+  • Flujo cerrado “datos → tablas → tres tipos de gráfica → PDF” en un solo
+    producto, incluyendo narrativa breve vía modelo de lenguaje (Gemini),
+    orientada al contexto del indicador seleccionado.
+  • Opción de persistencia en SQL Server para organizaciones que ya operan
+    sobre data warehouses institucionales o necesitan auditar series en el
+    tiempo.
+
+1.3 Beneficios clave para el usuario
+  • Ahorro de tiempo y menor riesgo de error en copiar/pegar desde portales.
+  • Informes presentables (PDF) listos para entregar en clase, cliente o
+    comité interno.
+  • Exploración rápida por categoría sin ser experto en APIs ni en limpieza
+    de JSON estadístico.
+  • Base tecnológica portable (Java, estándares abiertos) adaptable a entornos
+    corporativos que ya gestionan JVM y bases Microsoft.
+
+
+2. SEGMENTO DE CLIENTES
+--------------------------------------------------------------------------------
+
+2.1 Público objetivo principal (B2B / institucional)
+  • Centros de investigación, laboratorios de datos y oficinas de planeación
+    de universidades públicas y privadas en México que imparten materias de
+    estadística, economía, demografía o políticas públicas.
+  • Consultoras pequeñas y medianas que elaboran diagnósticos territoriales
+    y reportes con cita de fuentes oficiales.
+
+2.2 Segmentos secundarios
+  • Medios de comunicación regionales y newsletters especializados que
+    requieren gráficos reproducibles con fuente INEGI.
+  • Dependencias de gobierno estatal o municipal con equipos técnicos
+    reducidos (modo “oficina de datos” ligera).
+  • Formación ejecutiva / bootcamps de datos que buscan un caso de uso real
+    con API pública mexicana (licencias educativas).
+
+2.3 Perfil del usuario ideal
+  • Rol: analista de datos junior, investigador, docente o consultor.
+  • Confort técnico mediano: sabe interpretar gráficas y tablas; no necesita
+    programar si usa la versión empaquetada o la futura versión SaaS.
+  • Objetivo: producir entregables formales (PDF) y, en empresas mayores,
+    almacenar series en SQL Server para cruzarlas con datos propios.
+  • Restricciones: cumplimiento institucional (datos oficiales, trazabilidad),
+    presupuesto limitado frente a suites internacionales de BI.
+
+
+3. CANALES
+--------------------------------------------------------------------------------
+
+3.1 Distribución del software
+  • Corto plazo (producto actual): aplicación de escritorio (Java / Swing),
+    distribución por instalador o paquete enterprise (JAR + dependencias)
+    vía licenciamiento directo o acuerdo marco con instituciones.
+  • Mediano plazo (evolución alineada a SaaS): aplicación web multiusuario
+    con el mismo núcleo de negocio (ingestión INEGI, tableros, exportación PDF,
+    almacenamiento en la nube o conector a BD del cliente). El modelo SaaS
+    maximiza recurrencia y reduce fricción de instalación.
+  • Largo plazo: API o conectores para herramientas ya adoptadas (export a
+    Power BI / Looker / Metabase) como capa de ingreso adicional (upsell).
+
+3.2 Medios para llegar a clientes
+  • Marketing de contenidos: guías “cómo interpretar indicadores INEGI” con
+    ejemplos generados por el producto (SEO en español).
+  • LinkedIn y X (Twitter) dirigidos a directores de planeación universitaria,
+    think tanks y consultoras de datos en México.
+  • Alianzas con incubadoras, fintech de impacto social y programas
+    gubernamentales de digitalización (LAIN México, retos de datos abiertos).
+  • Participación en ferias EdTech y congresos de estadística (AMECAP, CONAIS,
+    congresos de universidades estatales).
+  • Programa de referidos para docentes (licencia gratuita limitada a cambio de
+    caso de estudio publicable).
+
+
+4. RELACIÓN CON CLIENTES
+--------------------------------------------------------------------------------
+
+4.1 Tipo de relación predominante
+  • Autoservicio en la versión SaaS estándar: registro, prueba gratuita con
+    cupos de exportaciones PDF y categorías limitadas, documentación en línea.
+  • Soporte estándar por ticket (email / chat) en planes Pro y Enterprise.
+  • Relación personalizada en Enterprise: onboarding remoto, conectores a la
+    base de datos del cliente, períodos de sincronización programada INEGI→BD,
+    y SLA de respuesta acordado.
+
+4.2 Estrategias de fidelización
+  • Actualización periódica automática de series INEGI con notificación al
+    usuario (“nueva observación disponible”) para generar hábito de uso.
+  • Histórico de reportes en la nube (versión SaaS) con plantillas de marca
+    institucional en PDF.
+  • Programa “campus license”: precio por volumen de estaciones o por número
+    de docentes, con materiales didácticos exclusivos.
+  • Comunidad de práctica (webinars trimestrales sobre lectura crítica de
+    indicadores).
+
+
+5. FUENTES DE INGRESOS
+--------------------------------------------------------------------------------
+
+5.1 Modelo recomendado (combinado)
+  • Suscripción SaaS (ingreso recurrente principal): planes por usuario o por
+    “workspace” institucional, con límites de exportaciones PDF/mes y de
+    llamadas a modelos de lenguaje para la introducción automática.
+  • Licencia perpetua o anual de escritorio (ingreso por proyecto): para
+    clientes con políticas que impiden nube pública; precio más alto por
+    servicio de instalación y mantenimiento.
+  • Servicios profesionales (20–30 % del revenue en etapas tempranas):
+    personalización de categorías INEGI, integración con SQL Server del
+    cliente, capacitación y diseño de plantillas PDF corporativas.
+
+5.2 Freemium / prueba
+  • Nivel gratuito: una categoría, datos con retraso o sin persistencia en
+    BD, marca de agua en PDF, sin soporte prioritario — objetivo adquisición.
+
+5.3 Estrategia de precios (referencia a validar en mercado)
+  • Plan Starter (freemium o MXN bajo dos dígitos/mes): usuario individual,
+    tablero básico, pocas exportaciones.
+  • Plan Pro (rango medio, facturación mensual/anual): todas las categorías,
+    PDF sin marca, integración Gemini con cuota razonable.
+  • Plan Institución / Enterprise (precio cerrado por cotización): SSO, BD
+    dedicada o VPC, SLA, sincronización programada, hasta N usuarios.
+  • Descuento anual del 15–20 % vs. mensual para mejorar retención y cash flow.
+
+  Nota: los costos de API (Gemini) y posibles límites del token INEGI deben
+  incorporarse al precio como sobrecosto transparente o paquetes de créditos.
+
+
+6. RECURSOS CLAVE
+--------------------------------------------------------------------------------
+
+6.1 Tecnológicos
+  • Stack actual: Java 17, Maven, Swing (desktop); JFreeChart; iText 7;
+    Jackson; JDBC Microsoft SQL Server; integración HTTP cliente estándar;
+    API Gemini para texto introductorio.
+  • Evolución SaaS: backend (p. ej. Spring Boot o Quarkus), frontend web
+    (React/Vue), colas para jobs de sincronización INEGI, almacenamiento
+    objeto para PDFs, PostgreSQL o SQL Server administrado, observabilidad
+    (logs, métricas).
+  • Infraestructura: nube con región preferente México o US próximo para
+    latencia y soberanía percibida (AWS, GCP, Azure).
+
+6.2 Humanos
+  • CTO / lead engineer full‑stack con experiencia en integraciones API y
+    seguridad.
+  • Product manager con dominio de datos públicos y UX analítica.
+  • Data engineer part‑time para robustecer pipelines INEGI y calidad de
+    series.
+  • Soporte y éxito del cliente (tier 1) en horario CDMX.
+  • Comercial B2B institucional (media jornada inicial) con cartera educativa
+    o gubernamental.
+
+6.3 Financieros
+  • Capital semilla para 12–18 meses de runway: nómina núcleo, infraestructura,
+    marketing inicial y buffers legales (protección de datos, términos de uso).
+  • Línea de crédito ligera o factoring solo si se cierran contratos
+    gubernamentales con pagos diferidos.
+
+
+7. ACTIVIDADES CLAVE
+--------------------------------------------------------------------------------
+
+7.1 Desarrollo y mantenimiento del software
+  • Mantener compatibilidad con cambios en el API INEGI y monitorear
+    deprecaciones.
+  • Roadmap: versión web, multi‑tenant, permisos por rol, auditoría de
+    descargas y control de versiones de reportes.
+  • Hardening de seguridad: rotación de secretos, almacenamiento de API keys,
+    cumplimiento mínimo (AVISO DE PRIVACIDAD en México si hay datos personales
+    de usuarios).
+
+7.2 Marketing
+  • Casos de uso documentados (antes/después en tiempo de elaboración de
+    reporte).
+  • Prueba social con logos de primeras universidades o consultoras piloto.
+
+7.3 Soporte al cliente
+  • Base de conocimiento sobre errores frecuentes (caídas INEGI, firewalls,
+    permisos SQL Server).
+  • Canal institucional para Enterprise con ingeniero asignado en despliegues
+    críticos.
+
+
+8. SOCIOS CLAVE
+--------------------------------------------------------------------------------
+
+8.1 Aliados estratégicos posibles
+  • Centros de datos abiertos y laboratorios de universidades (co‑branding,
+    validación académica).
+  • Cámaras de consultores o asociaciones de evaluación educativa que difundan
+    el producto como herramienta estándar de trabajo con fuentes oficiales.
+
+8.2 Proveedores de servicios
+  • INEGI (uso del API BISE bajo sus términos): fuente de verdad; dependencia
+    operativa que debe gestionarse con monitoreo y comunicación clara al
+    usuario final.
+  • Google Gemini (u otro proveedor LLM): generación de introducciones;
+    alternativa mult proveedor para reducir riesgo de concentración.
+  • Proveedor cloud (hosting, DB administrada, CDN).
+  • Pasarela de pagos recurrentes (Stripe, Mercado Pago Subscriptions) y
+    facturación electrónica en México (PAC / CFDI 4.0).
+  • Firma electrónica o sellado de tiempo opcional si en el futuro se ofrece
+    trazabilidad legal de reportes (nicho avanzado).
+
+
+9. ESTRUCTURA DE COSTOS
+--------------------------------------------------------------------------------
+
+9.1 Costos fijos (mensuales típicos en operación SaaS ligera)
+  • Nómina del equipo núcleo (2–4 personas según etapa).
+  • Infraestructura base cloud (compute, DB, almacenamiento, monitoreo).
+  • Herramientas SaaS (GitHub, CI/CD, helpdesk, analytics producto).
+  • Servicios legales y contables (constitución, contratos marco, PRODECON /
+    protección al consumidor si aplica).
+  • Seguro cibernético básico al escalar clientes Enterprise.
+
+9.2 Costos variables
+  • Uso de API de modelos de lenguaje proporcional a PDFs generados o
+    introducciones solicitadas.
+  • Ancho de banda y almacenamiento de PDFs/históricos por cliente.
+  • Comisiones de pasarela de pago.
+  • Soporte premium y horas de integración facturadas aparte.
+  • Campañas digitales (CPC/CPM) escala con adquisición.
+
+  Margen bruto objetivo (SaaS maduro): 70–80 % en software; menor en proyectos
+  de integración personalizada.
+
+
+10. VENTAJA COMPETITIVA Y BARRERAS DE ENTRADA
+--------------------------------------------------------------------------------
+
+10.1 Qué dificulta copiar el proyecto
+  • Conocimiento acumulado del formato real del JSON INEGI y de los edge cases
+    en series (periodos faltantes, codificación CSV, orden de observaciones).
+  • Paquete integral (ingesta + visualización + PDF + opción SQL + texto
+    contextual) ya probado; un competidor genérico de BI exige más
+    configuración al usuario.
+  • Relaciones institucionales y casos de éxito en educación superior mexicana
+    generan confianza y tiempo de venta más corto para el incumbente.
+  • Datos históricos y plantillas de informe alojados en la versión nube
+    aumentan el costo de migración (lock‑in benigno).
+
+10.2 Barreras de entrada (y cómo gestionarlas)
+  • Dependencia de políticas del INEGI y disponibilidad del API: mitigar con
+    capa de caché, mensajes claros al usuario y diversificación futura hacia
+    otras fuentes oficiales (CONEVAL, Banco Mundial para comparables).
+  • Costo de APIs de IA: mitigar con modelos más baratos, textos más cortos,
+    modo “sin IA” en planes básicos.
+  • Competencia de suites internacionales: se compite por especialización
+    vertical y precio, no por amplitude de features genéricas.
+
+
+================================================================================
+  NOTA FINAL
+  Este modelo asume la evolución natural del producto actual (desktop Java
+  centrado en INEGI) hacia una oferta SaaS escalable. La validez de precios y
+  segmentos debe confirmarse con entrevistas a 10–15 tomadores de decisión en
+  universidades y consultoras, y con pruebas de disposición a pago (WTP).
+================================================================================
+  FIN DEL DOCUMENTO
+================================================================================

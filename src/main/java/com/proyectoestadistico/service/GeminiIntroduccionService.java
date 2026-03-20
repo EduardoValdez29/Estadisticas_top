@@ -1,5 +1,6 @@
 package com.proyectoestadistico.service;
 
+import com.proyectoestadistico.i18n.UiMessages;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -32,16 +33,27 @@ public class GeminiIntroduccionService {
 
         String apiKey = obtenerApiKey();
         if (apiKey == null || apiKey.isBlank()) {
-            return "Introducción no disponible (Gemini sin token).";
+            return UiMessages.get("gemini.no.token");
         }
 
-        String prompt = ""
-                + "Genera un texto introductorio breve (maximo 750 caracteres) en espanol para acompañar "
-                + "un reporte con graficas de barras, lineas y dispersion, y una tabla, enfocado en el indicador: "
-                + (ind.isBlank() ? "general" : ind)
-                + ". Categoria: " + (cat.isBlank() ? "general" : cat)
-                + ". No uses listas ni titulos. 2-3 frases maximas. "
-                + "Debe hablar sobre las graficas y lo que se observa a partir de los datos.";
+        String prompt;
+        if (UiMessages.isEnglish()) {
+            prompt = ""
+                    + "Write a short introductory text (max 750 characters) in English for a report with bar, line, "
+                    + "and scatter charts plus a table, focused on the indicator: "
+                    + (ind.isBlank() ? "general" : ind)
+                    + ". Category: " + (cat.isBlank() ? "general" : cat)
+                    + ". No bullet lists or headings. At most 2–3 sentences. "
+                    + "It should mention the charts and what the data suggests.";
+        } else {
+            prompt = ""
+                    + "Genera un texto introductorio breve (maximo 750 caracteres) en espanol para acompañar "
+                    + "un reporte con graficas de barras, lineas y dispersion, y una tabla, enfocado en el indicador: "
+                    + (ind.isBlank() ? "general" : ind)
+                    + ". Categoria: " + (cat.isBlank() ? "general" : cat)
+                    + ". No uses listas ni titulos. 2-3 frases maximas. "
+                    + "Debe hablar sobre las graficas y lo que se observa a partir de los datos.";
+        }
 
         try {
             String url = "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -71,19 +83,20 @@ public class GeminiIntroduccionService {
             HttpResponse<String> resp = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             int status = resp.statusCode();
             if (status < 200 || status >= 300) {
-                return "Introducción no disponible (Gemini HTTP " + status + ").";
+                return UiMessages.get("gemini.no.http", status);
             }
 
             JsonNode json = mapper.readTree(resp.body());
             String text = extraerTextoGemini(json);
             if (text == null || text.isBlank()) {
-                return "Introducción no disponible (respuesta Gemini vacía).";
+                return UiMessages.get("gemini.empty");
             }
 
             text = text.trim();
             return recortarCaracteres(text, 750);
         } catch (Exception e) {
-            return "Introducción no disponible (error Gemini: " + (e.getMessage() == null ? "sin detalle" : e.getMessage()) + ").";
+            String detail = e.getMessage() == null ? UiMessages.get("gemini.detail.none") : e.getMessage();
+            return UiMessages.get("gemini.error", detail);
         }
     }
 

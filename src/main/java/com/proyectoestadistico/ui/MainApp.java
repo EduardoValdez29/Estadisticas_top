@@ -1,5 +1,6 @@
 package com.proyectoestadistico.ui;
 
+import com.proyectoestadistico.i18n.UiMessages;
 import com.proyectoestadistico.model.TablaDatos;
 import com.proyectoestadistico.service.ActualizadorINEGI;
 import com.proyectoestadistico.service.GeminiIntroduccionService;
@@ -42,9 +43,21 @@ public class MainApp extends JFrame {
     private JComboBox<String> comboCategoria;
     private JCheckBox chkPersistirBD;
     private JLabel badgeEstadoCsv;
+    private JLabel lblTitulo;
+    private JLabel lblSubtitulo;
+    private JLabel lblEtiquetaCategoria;
+    private JButton btnIdioma;
+
+    private enum BadgeKind {
+        NOT_UPDATED, DOWNLOADING, OK_WITH_DB, OK_CSV, UPDATE_ERROR, NEED_REFRESH_FIRST, SHOWING, LOAD_ERROR
+    }
+
+    private BadgeKind badgeKind = BadgeKind.NOT_UPDATED;
+    private String badgeCategoriaEs;
 
     public MainApp() {
-        super("Proyecto Estadístico - Reporte y Gráficas");
+        super();
+        setTitle(UiMessages.get("window.title"));
         theme = UITheme.apply();
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(1200, 750);
@@ -63,20 +76,20 @@ public class MainApp extends JFrame {
         ));
         topPanel.setBackground(theme.bg1);
 
-        JLabel titulo = new JLabel("Actualice datos (INEGI) para visualizarlo");
-        titulo.setFont(theme.titleFont(titulo));
-        titulo.setForeground(theme.text);
+        lblTitulo = new JLabel(UiMessages.get("header.title"));
+        lblTitulo.setFont(theme.titleFont(lblTitulo));
+        lblTitulo.setForeground(theme.text);
 
-        JLabel subtitulo = new JLabel("Se descargan datos por HTTP, se convierten a CSV y (opcional) se guardan en SQL Server");
-        subtitulo.setFont(theme.subtitleFont(subtitulo));
-        subtitulo.setForeground(theme.muted);
+        lblSubtitulo = new JLabel(UiMessages.get("header.subtitle"));
+        lblSubtitulo.setFont(theme.subtitleFont(lblSubtitulo));
+        lblSubtitulo.setForeground(theme.muted);
 
         JPanel tituloPanel = new JPanel();
         tituloPanel.setLayout(new BoxLayout(tituloPanel, BoxLayout.Y_AXIS));
         tituloPanel.setOpaque(false);
-        tituloPanel.add(titulo);
+        tituloPanel.add(lblTitulo);
         tituloPanel.add(Box.createVerticalStrut(2));
-        tituloPanel.add(subtitulo);
+        tituloPanel.add(lblSubtitulo);
 
         comboCategoria = new JComboBox<>(new String[]{"Educación", "Población", "Seguridad"});
         comboCategoria.setEnabled(false);
@@ -84,14 +97,24 @@ public class MainApp extends JFrame {
         comboCategoria.setForeground(theme.text);
         comboCategoria.setOpaque(true);
         comboCategoria.setBorder(theme.roundedBorder(theme.border));
+        comboCategoria.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof String s) {
+                    setText(etiquetaCategoriaVisible(s));
+                }
+                return this;
+            }
+        });
         comboCategoria.addActionListener(ev -> cargarVisualizacionDesdeCategoriaSeleccionada());
 
         JPanel categoriaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         categoriaPanel.setOpaque(false);
-        JLabel lblCategoria = new JLabel("Categoría:");
-        lblCategoria.setForeground(theme.muted);
-        lblCategoria.setFont(lblCategoria.getFont().deriveFont(Font.BOLD, 12f));
-        categoriaPanel.add(lblCategoria);
+        lblEtiquetaCategoria = new JLabel(UiMessages.get("category.label"));
+        lblEtiquetaCategoria.setForeground(theme.muted);
+        lblEtiquetaCategoria.setFont(lblEtiquetaCategoria.getFont().deriveFont(Font.BOLD, 12f));
+        categoriaPanel.add(lblEtiquetaCategoria);
         categoriaPanel.add(comboCategoria);
 
         tituloPanel.add(Box.createVerticalStrut(10));
@@ -100,24 +123,26 @@ public class MainApp extends JFrame {
 
         JPanel botonesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         botonesPanel.setOpaque(false);
-        badgeEstadoCsv = new JLabel("Datos no actualizados");
+        badgeEstadoCsv = new JLabel();
         badgeEstadoCsv.setOpaque(true);
-        badgeEstadoCsv.setBackground(theme.bg2);
-        badgeEstadoCsv.setForeground(theme.muted);
         badgeEstadoCsv.setBorder(BorderFactory.createCompoundBorder(
                 theme.roundedBorder(theme.border),
                 BorderFactory.createEmptyBorder(2, 8, 2, 8)
         ));
 
-        chkPersistirBD = new JCheckBox("Guardar en BD (SQL Server)");
+        chkPersistirBD = new JCheckBox(UiMessages.get("chk.persist_db"));
         chkPersistirBD.setSelected(true);
         chkPersistirBD.setOpaque(false);
         chkPersistirBD.setForeground(theme.text);
 
-        btnActualizarDatos = crearBotonPrimario("Actualizar datos (INEGI)", theme.neonCyan, theme.neonCyan.darker());
-        btnActualizarDatos.setToolTipText("Descarga JSON desde INEGI, genera CSV y lo inserta en SQL Server (si está activo)");
-        btnGenerarPdf = crearBotonSecundario("Generar PDF");
-        btnGenerarPdf.setToolTipText("Genera un reporte en PDF con la tabla y las gráficas");
+        btnIdioma = crearBotonSecundario(UiMessages.get("btn.lang_to_en"));
+        btnIdioma.setToolTipText(UiMessages.get("btn.language_tip"));
+        btnIdioma.addActionListener(this::accionCambiarIdioma);
+
+        btnActualizarDatos = crearBotonPrimario(UiMessages.get("btn.update"), theme.neonCyan, theme.neonCyan.darker());
+        btnActualizarDatos.setToolTipText(UiMessages.get("btn.update.tip"));
+        btnGenerarPdf = crearBotonSecundario(UiMessages.get("btn.pdf"));
+        btnGenerarPdf.setToolTipText(UiMessages.get("btn.pdf.tip"));
         btnGenerarPdf.setEnabled(false);
 
         btnActualizarDatos.addActionListener(this::accionCargarCsv);
@@ -126,6 +151,7 @@ public class MainApp extends JFrame {
         botonesPanel.add(badgeEstadoCsv);
         botonesPanel.add(Box.createHorizontalStrut(6));
         botonesPanel.add(chkPersistirBD);
+        botonesPanel.add(btnIdioma);
         botonesPanel.add(btnActualizarDatos);
         botonesPanel.add(btnGenerarPdf);
 
@@ -143,9 +169,9 @@ public class MainApp extends JFrame {
         tabsTablas.setBackground(theme.bg0);
         tabsTablas.setOpaque(true);
         tabsTablas.setForeground(theme.text);
-        tabsTablas.addTab("Tabla 1", crearPlaceholderTabla("Tabla 1"));
-        tabsTablas.addTab("Tabla 2", crearPlaceholderTabla("Tabla 2"));
-        tabsTablas.addTab("Tabla 3", crearPlaceholderTabla("Tabla 3"));
+        tabsTablas.addTab(UiMessages.get("table.numbered", 1), crearPlaceholderTabla(1));
+        tabsTablas.addTab(UiMessages.get("table.numbered", 2), crearPlaceholderTabla(2));
+        tabsTablas.addTab(UiMessages.get("table.numbered", 3), crearPlaceholderTabla(3));
         splitPane.setTopComponent(crearCard(tabsTablas));
         estilizarTabs(tabsTablas);
 
@@ -154,12 +180,12 @@ public class MainApp extends JFrame {
         tabsGraficas.setBackground(theme.bg0);
         tabsGraficas.setOpaque(true);
         tabsGraficas.setForeground(theme.text);
-        tabsGraficas.addTab("Barras", crearPlaceholderGraficas("Gráfica de barras"));
-        tabsGraficas.setToolTipTextAt(0, "Comparación de valores por año o categoría");
-        tabsGraficas.addTab("Líneas", crearPlaceholderGraficas("Gráfica de líneas"));
-        tabsGraficas.setToolTipTextAt(1, "Evolución en el tiempo");
-        tabsGraficas.addTab("Dispersión", crearPlaceholderGraficas("Gráfica de dispersión"));
-        tabsGraficas.setToolTipTextAt(2, "Relación entre dos variables numéricas");
+        tabsGraficas.addTab(UiMessages.get("chart.bars"), crearPlaceholderGraficas(0));
+        tabsGraficas.setToolTipTextAt(0, UiMessages.get("chart.tab.tip.bars"));
+        tabsGraficas.addTab(UiMessages.get("chart.lines"), crearPlaceholderGraficas(1));
+        tabsGraficas.setToolTipTextAt(1, UiMessages.get("chart.tab.tip.lines"));
+        tabsGraficas.addTab(UiMessages.get("chart.scatter"), crearPlaceholderGraficas(2));
+        tabsGraficas.setToolTipTextAt(2, UiMessages.get("chart.tab.tip.scatter"));
         splitPane.setBottomComponent(crearCard(tabsGraficas));
         estilizarTabs(tabsGraficas);
 
@@ -170,6 +196,167 @@ public class MainApp extends JFrame {
         getRootPane().putClientProperty("tabsGraficas", tabsGraficas);
         getRootPane().putClientProperty("tabsTablas", tabsTablas);
         actualizarEstadoBotonPdf(false);
+        setBadge(BadgeKind.NOT_UPDATED, null);
+    }
+
+    private String etiquetaCategoriaVisible(String claveEs) {
+        if (claveEs == null || claveEs.isBlank()) {
+            return "";
+        }
+        return switch (claveEs) {
+            case "Educación" -> UiMessages.get("category.education");
+            case "Población" -> UiMessages.get("category.population");
+            case "Seguridad" -> UiMessages.get("category.security");
+            default -> claveEs;
+        };
+    }
+
+    private void setBadge(BadgeKind kind, String categoriaEs) {
+        this.badgeKind = kind;
+        this.badgeCategoriaEs = categoriaEs;
+        pintarBadge();
+    }
+
+    private void pintarBadge() {
+        if (badgeEstadoCsv == null) {
+            return;
+        }
+        String text = switch (badgeKind) {
+            case NOT_UPDATED -> UiMessages.get("badge.not_updated");
+            case DOWNLOADING -> UiMessages.get("badge.downloading");
+            case OK_WITH_DB -> UiMessages.get("badge.ok_db");
+            case OK_CSV -> UiMessages.get("badge.ok_csv");
+            case UPDATE_ERROR -> UiMessages.get("badge.error_update");
+            case NEED_REFRESH_FIRST -> UiMessages.get("badge.need_refresh_first");
+            case SHOWING -> UiMessages.get("badge.showing", etiquetaCategoriaVisible(badgeCategoriaEs));
+            case LOAD_ERROR -> UiMessages.get("badge.load_error");
+        };
+        Color bg;
+        Color fg;
+        switch (badgeKind) {
+            case NOT_UPDATED -> {
+                bg = theme.bg2;
+                fg = theme.muted;
+            }
+            case DOWNLOADING, NEED_REFRESH_FIRST -> {
+                bg = theme.neonMagenta;
+                fg = theme.bg0;
+            }
+            case OK_WITH_DB, OK_CSV, SHOWING -> {
+                bg = theme.neonGreen;
+                fg = theme.bg0;
+            }
+            case UPDATE_ERROR, LOAD_ERROR -> {
+                bg = theme.danger;
+                fg = theme.bg0;
+            }
+            default -> {
+                bg = theme.bg2;
+                fg = theme.muted;
+            }
+        }
+        actualizarBadgeCsv(text, bg, fg);
+    }
+
+    private void accionCambiarIdioma(ActionEvent e) {
+        UiMessages.setEnglish(!UiMessages.isEnglish());
+        aplicarIdiomaEnPantalla();
+    }
+
+    private void aplicarIdiomaEnPantalla() {
+        setTitle(UiMessages.get("window.title"));
+        if (lblTitulo != null) {
+            lblTitulo.setText(UiMessages.get("header.title"));
+        }
+        if (lblSubtitulo != null) {
+            lblSubtitulo.setText(UiMessages.get("header.subtitle"));
+        }
+        if (lblEtiquetaCategoria != null) {
+            lblEtiquetaCategoria.setText(UiMessages.get("category.label"));
+        }
+        if (chkPersistirBD != null) {
+            chkPersistirBD.setText(UiMessages.get("chk.persist_db"));
+        }
+        if (btnIdioma != null) {
+            btnIdioma.setText(UiMessages.isEnglish() ? UiMessages.get("btn.lang_to_es") : UiMessages.get("btn.lang_to_en"));
+            btnIdioma.setToolTipText(UiMessages.get("btn.language_tip"));
+        }
+        if (btnActualizarDatos != null) {
+            btnActualizarDatos.setText(UiMessages.get("btn.update"));
+            btnActualizarDatos.setToolTipText(UiMessages.get("btn.update.tip"));
+        }
+        if (btnGenerarPdf != null) {
+            btnGenerarPdf.setText(UiMessages.get("btn.pdf"));
+            btnGenerarPdf.setToolTipText(UiMessages.get("btn.pdf.tip"));
+        }
+        pintarBadge();
+        if (csvPorCategoria == null || csvPorCategoria.isEmpty() || tablasDerivadas == null || tablasDerivadas.isEmpty()) {
+            restaurarPlaceholdersTablas();
+            restaurarPlaceholdersGraficas();
+        } else {
+            JTabbedPane tabsGraficas = (JTabbedPane) getRootPane().getClientProperty("tabsGraficas");
+            if (tabsGraficas != null) {
+                for (int i = 0; i < 3; i++) {
+                    String shortTitle = switch (i) {
+                        case 0 -> UiMessages.get("chart.bars");
+                        case 1 -> UiMessages.get("chart.lines");
+                        default -> UiMessages.get("chart.scatter");
+                    };
+                    String tip = switch (i) {
+                        case 0 -> UiMessages.get("chart.tab.tip.bars");
+                        case 1 -> UiMessages.get("chart.tab.tip.lines");
+                        default -> UiMessages.get("chart.tab.tip.scatter");
+                    };
+                    tabsGraficas.setTitleAt(i, shortTitle);
+                    tabsGraficas.setToolTipTextAt(i, tip);
+                    actualizarTextoTab(tabsGraficas, i, shortTitle);
+                }
+            }
+            poblarTablasSwing();
+            generarGraficas();
+        }
+        if (comboCategoria != null) {
+            comboCategoria.repaint();
+        }
+        revalidate();
+        repaint();
+    }
+
+    private void restaurarPlaceholdersTablas() {
+        JTabbedPane tabsTablas = (JTabbedPane) getRootPane().getClientProperty("tabsTablas");
+        if (tabsTablas == null) {
+            return;
+        }
+        for (int i = 0; i < 3; i++) {
+            String title = UiMessages.get("table.numbered", i + 1);
+            tabsTablas.setTitleAt(i, title);
+            tabsTablas.setToolTipTextAt(i, title);
+            actualizarTextoTab(tabsTablas, i, title);
+            tabsTablas.setComponentAt(i, crearPlaceholderTabla(i + 1));
+        }
+    }
+
+    private void restaurarPlaceholdersGraficas() {
+        JTabbedPane tabsGraficas = (JTabbedPane) getRootPane().getClientProperty("tabsGraficas");
+        if (tabsGraficas == null) {
+            return;
+        }
+        for (int i = 0; i < 3; i++) {
+            String shortTitle = switch (i) {
+                case 0 -> UiMessages.get("chart.bars");
+                case 1 -> UiMessages.get("chart.lines");
+                default -> UiMessages.get("chart.scatter");
+            };
+            String tip = switch (i) {
+                case 0 -> UiMessages.get("chart.tab.tip.bars");
+                case 1 -> UiMessages.get("chart.tab.tip.lines");
+                default -> UiMessages.get("chart.tab.tip.scatter");
+            };
+            tabsGraficas.setTitleAt(i, shortTitle);
+            tabsGraficas.setToolTipTextAt(i, tip);
+            actualizarTextoTab(tabsGraficas, i, shortTitle);
+            tabsGraficas.setComponentAt(i, crearPlaceholderGraficas(i));
+        }
     }
 
     private JButton crearBotonPrimario(String texto, Color base, Color hover) {
@@ -238,7 +425,12 @@ public class MainApp extends JFrame {
         btnGenerarPdf.setBorder(theme.roundedBorder(habilitado ? theme.border : new Color(44, 56, 92)));
     }
 
-    private JPanel crearPlaceholderGraficas(String titulo) {
+    private JPanel crearPlaceholderGraficas(int chartIndex) {
+        String chartTitle = switch (chartIndex) {
+            case 0 -> UiMessages.get("chart.label.bar");
+            case 1 -> UiMessages.get("chart.label.line");
+            default -> UiMessages.get("chart.label.scatter");
+        };
         JPanel p = new JPanel(new GridBagLayout());
         p.setBackground(theme.bg1);
         JPanel stack = new JPanel();
@@ -246,11 +438,11 @@ public class MainApp extends JFrame {
         stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
         stack.add(new PlaceholderIcon(theme.neonCyan));
         stack.add(Box.createVerticalStrut(10));
-        JLabel label = new JLabel("Actualice datos (INEGI) para ver la " + titulo, SwingConstants.CENTER);
+        JLabel label = new JLabel(UiMessages.get("placeholder.chart.prompt", chartTitle), SwingConstants.CENTER);
         label.setForeground(theme.muted);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         stack.add(label);
-        JLabel hint = new JLabel("Tip: el flujo usa `Periodo` como X y los primeros 3 indicadores como Y", SwingConstants.CENTER);
+        JLabel hint = new JLabel(UiMessages.get("placeholder.chart.hint"), SwingConstants.CENTER);
         hint.setForeground(new Color(120, 140, 190));
         hint.setAlignmentX(Component.CENTER_ALIGNMENT);
         hint.setFont(hint.getFont().deriveFont(Font.PLAIN, 11f));
@@ -260,7 +452,8 @@ public class MainApp extends JFrame {
         return p;
     }
 
-    private JPanel crearPlaceholderTabla(String titulo) {
+    private JPanel crearPlaceholderTabla(int tableNumber) {
+        String tableTitle = UiMessages.get("table.numbered", tableNumber);
         JPanel p = new JPanel(new GridBagLayout());
         p.setBackground(theme.bg1);
         JPanel stack = new JPanel();
@@ -268,11 +461,11 @@ public class MainApp extends JFrame {
         stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
         stack.add(new PlaceholderIcon(theme.neonPurple));
         stack.add(Box.createVerticalStrut(10));
-        JLabel label = new JLabel("Actualice datos (INEGI) para ver la " + titulo, SwingConstants.CENTER);
+        JLabel label = new JLabel(UiMessages.get("placeholder.table.prompt", tableTitle), SwingConstants.CENTER);
         label.setForeground(theme.muted);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         stack.add(label);
-        JLabel hint = new JLabel("Datos en modo solo lectura (descargados por HTTP)", SwingConstants.CENTER);
+        JLabel hint = new JLabel(UiMessages.get("placeholder.table.hint"), SwingConstants.CENTER);
         hint.setForeground(new Color(120, 140, 190));
         hint.setAlignmentX(Component.CENTER_ALIGNMENT);
         hint.setFont(hint.getFont().deriveFont(Font.PLAIN, 11f));
@@ -291,7 +484,7 @@ public class MainApp extends JFrame {
         btnActualizarDatos.setEnabled(false);
         actualizarEstadoBotonPdf(false);
         if (comboCategoria != null) comboCategoria.setEnabled(false);
-        actualizarBadgeCsv("Descargando INEGI...", theme.neonMagenta, theme.bg0);
+        setBadge(BadgeKind.DOWNLOADING, null);
 
         SwingWorker<ActualizadorINEGI.Resultado, Void> worker = new SwingWorker<>() {
             @Override
@@ -310,17 +503,13 @@ public class MainApp extends JFrame {
                         cargarVisualizacionDesdeCategoriaSeleccionada();
                     }
 
-                    actualizarBadgeCsv(
-                            persistirBD ? "Datos actualizados y BD guardada" : "Datos actualizados (CSV)",
-                            theme.neonGreen,
-                            theme.bg0
-                    );
+                    setBadge(persistirBD ? BadgeKind.OK_WITH_DB : BadgeKind.OK_CSV, null);
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    actualizarBadgeCsv("Error al actualizar", theme.danger, theme.bg0);
+                    setBadge(BadgeKind.UPDATE_ERROR, null);
                     String msg = ex.getMessage();
-                    mostrarError("Error al actualizar datos", msg == null || msg.isBlank()
-                            ? "Ocurrió un error actualizando los datos." : msg);
+                    mostrarError(UiMessages.get("dialog.error.update.title"), msg == null || msg.isBlank()
+                            ? UiMessages.get("dialog.error.update.body") : msg);
                     actualizarEstadoBotonPdf(false);
                 } finally {
                     btnActualizarDatos.setEnabled(true);
@@ -341,15 +530,15 @@ public class MainApp extends JFrame {
     private void cargarVisualizacionDesdeCategoria(String categoria) {
         if (categoria == null || categoria.isBlank()) return;
         if (csvPorCategoria == null || csvPorCategoria.isEmpty()) {
-            actualizarBadgeCsv("Primero actualice los datos", theme.neonMagenta, theme.bg0);
+            setBadge(BadgeKind.NEED_REFRESH_FIRST, null);
             actualizarEstadoBotonPdf(false);
             return;
         }
 
         Path csv = csvPorCategoria.get(categoria);
         if (csv == null || !Files.exists(csv)) {
-            mostrarWarn("CSV no encontrado",
-                    "No se encontró el CSV para la categoría seleccionada: <b>" + escapar(categoria) + "</b>.");
+            mostrarWarn(UiMessages.get("dialog.csv.notfound.title"),
+                    UiMessages.get("dialog.csv.notfound.body", escapar(etiquetaCategoriaVisible(categoria))));
             actualizarEstadoBotonPdf(false);
             return;
         }
@@ -357,19 +546,19 @@ public class MainApp extends JFrame {
         try {
             tablaDatosOriginal = lectorCSV.leer(csv);
             if (tablaDatosOriginal == null || tablaDatosOriginal.getNumeroColumnas() == 0) {
-                mostrarError("Datos inválidos", "El CSV no contiene encabezados o columnas.");
+                mostrarError(UiMessages.get("dialog.invalid.title"), UiMessages.get("dialog.invalid.body"));
                 actualizarEstadoBotonPdf(false);
                 return;
             }
             if (tablaDatosOriginal.getNumeroFilas() == 0) {
-                mostrarWarn("CSV sin datos", "El CSV se cargó, pero no tiene filas de datos.");
+                mostrarWarn(UiMessages.get("dialog.csv.empty.title"), UiMessages.get("dialog.csv.empty.body"));
             }
 
             tablasDerivadas = derivarTresTablas(tablaDatosOriginal);
 
             if (tablasDerivadas == null || tablasDerivadas.isEmpty()) {
                 actualizarEstadoBotonPdf(false);
-                mostrarWarn("No se pudo derivar", "Los datos no permiten generar gráficas (columnas insuficientes).");
+                mostrarWarn(UiMessages.get("dialog.derive.fail.title"), UiMessages.get("dialog.derive.fail.body"));
             } else {
                 poblarTablasSwing();
                 generarGraficas();
@@ -378,16 +567,16 @@ public class MainApp extends JFrame {
 
             if (tablaDatosOriginal.getNumeroColumnas() < 4) {
                 int posibles = Math.max(0, Math.min(3, tablaDatosOriginal.getNumeroColumnas() - 1));
-                mostrarWarn("Columnas insuficientes",
-                        "Para crear <b>3 tablas</b> se requieren 4 columnas (X + Y1 + Y2 + Y3).<br>" +
-                                "Este CSV permite crear <b>" + posibles + "</b> tabla(s).");
+                mostrarWarn(UiMessages.get("dialog.cols.title"),
+                        UiMessages.get("dialog.cols.body", posibles));
             }
 
-            actualizarBadgeCsv("Mostrando: " + categoria, theme.neonGreen, theme.bg0);
+            setBadge(BadgeKind.SHOWING, categoria);
         } catch (IOException ex) {
             ex.printStackTrace();
-            mostrarError("Error al leer CSV", ex.getMessage() == null ? "Ocurrió un error leyendo el archivo." : ex.getMessage());
-            actualizarBadgeCsv("Error al cargar datos", theme.danger, theme.bg0);
+            mostrarError(UiMessages.get("dialog.read.error.title"),
+                    ex.getMessage() == null ? UiMessages.get("dialog.read.error.body") : escapar(ex.getMessage()));
+            setBadge(BadgeKind.LOAD_ERROR, null);
             actualizarEstadoBotonPdf(false);
         }
     }
@@ -410,14 +599,16 @@ public class MainApp extends JFrame {
 
         for (int i = 0; i < 3; i++) {
             if (i >= aMostrar.size() || aMostrar.get(i) == null) {
-                tabsTablas.setTitleAt(i, "Tabla " + (i + 1));
-                actualizarTextoTab(tabsTablas, i, "Tabla " + (i + 1));
-                tabsTablas.setToolTipTextAt(i, "Tabla " + (i + 1));
-                tabsTablas.setComponentAt(i, crearPlaceholderTabla("Tabla " + (i + 1)));
+                String placeholderTitle = UiMessages.get("table.numbered", i + 1);
+                tabsTablas.setTitleAt(i, placeholderTitle);
+                actualizarTextoTab(tabsTablas, i, placeholderTitle);
+                tabsTablas.setToolTipTextAt(i, placeholderTitle);
+                tabsTablas.setComponentAt(i, crearPlaceholderTabla(i + 1));
                 continue;
             }
             TablaDatos t = aMostrar.get(i);
-            String titulo = t.getNumeroColumnas() > 1 ? (t.getEncabezados().get(0) + " vs " + t.getEncabezados().get(1)) : ("Tabla " + (i + 1));
+            String titulo = t.getNumeroColumnas() > 1 ? (t.getEncabezados().get(0) + " vs " + t.getEncabezados().get(1))
+                    : UiMessages.get("table.numbered", i + 1);
             tabsTablas.setTitleAt(i, titulo);
             actualizarTextoTab(tabsTablas, i, titulo);
             tabsTablas.setToolTipTextAt(i, titulo);
@@ -573,17 +764,18 @@ public class MainApp extends JFrame {
 
     private void accionGenerarPdf(ActionEvent e) {
         if (tablasDerivadas == null || tablasDerivadas.isEmpty()) {
-            mostrarInfo("Aviso", "Primero actualice los datos (INEGI).");
+            mostrarInfo(UiMessages.get("dialog.info.refresh.first.title"), UiMessages.get("dialog.info.refresh.first.body"));
             return;
         }
 
-        Path destino = mostrarDialogoGuardarArchivoNativo("Guardar reporte PDF", "reporte_estadistico.pdf");
+        String nombreDefault = UiMessages.isEnglish() ? "statistical_report.pdf" : "reporte_estadistico.pdf";
+        Path destino = mostrarDialogoGuardarArchivoNativo(UiMessages.get("dialog.save.pdf.title"), nombreDefault);
         if (destino == null) return;
 
         try {
             if (Files.exists(destino)) {
-                int res = mostrarConfirmacion("Sobrescribir archivo",
-                        "El archivo ya existe:<br><b>" + escapar(destino.toString()) + "</b><br><br>¿Deseas sobrescribirlo?");
+                int res = mostrarConfirmacion(UiMessages.get("dialog.overwrite.title"),
+                        UiMessages.get("dialog.overwrite.body", escapar(destino.toString())));
                 if (res != JOptionPane.YES_OPTION) return;
             }
         } catch (Exception ignored) {
@@ -620,10 +812,12 @@ public class MainApp extends JFrame {
                     if (error != null) {
                         error.printStackTrace();
                         String msg = error.getMessage() == null ? "" : error.getMessage();
-                        mostrarError("Error al generar PDF", error.getClass().getSimpleName() + (msg.isBlank() ? "" : (" - " + msg)));
+                        mostrarError(UiMessages.get("dialog.pdf.error.title"),
+                                error.getClass().getSimpleName() + (msg.isBlank() ? "" : (" - " + msg)));
                         return;
                     }
-                    mostrarInfo("Éxito", "Reporte generado correctamente:<br><b>" + escapar(destino.toString()) + "</b>");
+                    mostrarInfo(UiMessages.get("dialog.success.title"),
+                            UiMessages.get("dialog.success.body", escapar(destino.toString())));
                 } finally {
                     btnGenerarPdf.setEnabled(true);
                 }
@@ -677,7 +871,7 @@ public class MainApp extends JFrame {
     }
 
     private int mostrarConfirmacion(String titulo, String mensajeHtml) {
-        Object[] options = {"Sí", "No"};
+        Object[] options = {UiMessages.get("dialog.yes"), UiMessages.get("dialog.no")};
         return mostrarDialogoOpciones(titulo, mensajeHtml, JOptionPane.QUESTION_MESSAGE, options, options[1]);
     }
 
@@ -806,6 +1000,10 @@ public class MainApp extends JFrame {
     }
 
     private void estilizarTabs(JTabbedPane tabs) {
+        ChangeListener prev = (ChangeListener) tabs.getClientProperty("tabChipListener");
+        if (prev != null) {
+            tabs.removeChangeListener(prev);
+        }
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         for (int i = 0; i < tabs.getTabCount(); i++) {
             tabs.setTabComponentAt(i, crearTabChip(tabs, i, tabs.getTitleAt(i), i == tabs.getSelectedIndex()));
@@ -821,6 +1019,7 @@ public class MainApp extends JFrame {
                 }
             }
         };
+        tabs.putClientProperty("tabChipListener", listener);
         tabs.addChangeListener(listener);
         listener.stateChanged(null);
     }

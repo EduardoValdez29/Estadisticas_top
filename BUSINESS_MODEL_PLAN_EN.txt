@@ -1,0 +1,274 @@
+================================================================================
+  BUSINESS MODEL — BUSINESS PLAN
+  Product: statistical indicators platform (INEGI, Mexico) with visualization,
+          PDF reports, and optional database integration
+  Document intended for investors, incubators, or entrepreneurship competitions
+================================================================================
+
+
+1. VALUE PROPOSITION
+--------------------------------------------------------------------------------
+
+1.1 Problem the software solves
+  • Educational institutions, consultancies, media outlets, and public-policy
+    teams in Mexico must consume official INEGI indicators on a recurring basis.
+    Today that workflow typically means: searching the institute’s site,
+    downloading series, cleaning data in Excel, rebuilding charts manually, and
+    writing reports. The process is slow, error-prone, and hard to scale when
+    several categories (education, population, security, etc.) are handled in
+    parallel.
+  • The software automates extraction via API, normalization into consistent
+    tables, coherent chart generation (bar, line, scatter), and PDF export with
+    assisted introductory text—reducing hours of operational work to minutes.
+
+1.2 What makes it unique vs. competitors
+  • Mexico-vertical focus: native integration with the INEGI indicators API
+    and preconfigured categories aligned with real public debates (education,
+    population, security)—not a “generic CSV dashboard.”
+  • End-to-end flow “data → tables → three chart types → PDF” in one product,
+    including short narrative via a large language model (Gemini), tailored to
+    the selected indicator’s context.
+  • Optional persistence in SQL Server for organizations that already run
+    institutional data warehouses or must audit series over time.
+
+1.3 Key benefits for the user
+  • Time savings and lower copy/paste risk from portals.
+  • Presentation-ready (PDF) reports for class, clients, or internal committees.
+  • Fast exploration by category without being an API or statistical-JSON
+    cleansing expert.
+  • Portable technology base (Java, open standards) that fits corporate
+    environments already running JVM and Microsoft databases.
+
+
+2. CUSTOMER SEGMENTS
+--------------------------------------------------------------------------------
+
+2.1 Primary audience (B2B / institutional)
+  • Research centers, data labs, and planning offices at public and private
+    Mexican universities teaching statistics, economics, demographics, or
+    public policy.
+  • Small and medium consultancies producing territorial diagnostics and
+    reports citing official sources.
+
+2.2 Secondary segments
+  • Regional media and specialist newsletters that need reproducible charts
+    with INEGI sourcing.
+  • State or municipal agencies with small technical teams (“light data
+    office” mode).
+  • Executive education / data bootcamps seeking a real use case with a
+    Mexican public API (educational licenses).
+
+2.3 Ideal user profile
+  • Role: junior data analyst, researcher, instructor, or consultant.
+  • Medium technical comfort: can read charts and tables; no programming
+    required when using the packaged build or a future SaaS version.
+  • Goal: produce formal deliverables (PDF) and, in larger organizations,
+    store series in SQL Server to join with proprietary data.
+  • Constraints: institutional compliance (official data, traceability),
+    limited budget vs. international BI suites.
+
+
+3. CHANNELS
+--------------------------------------------------------------------------------
+
+3.1 Software distribution
+  • Short term (current product): desktop application (Java / Swing),
+    distributed via installer or enterprise bundle (JAR + dependencies)
+    through direct licensing or framework agreements with institutions.
+  • Medium term (SaaS-aligned evolution): multi-user web application with the
+    same core value (INEGI ingestion, dashboards, PDF export, cloud storage or
+    connector to the customer’s DB). SaaS maximizes recurrence and reduces
+    installation friction.
+  • Long term: API or connectors for already adopted tools (export to
+    Power BI / Looker / Metabase) as an additional revenue layer (upsell).
+
+3.2 Customer acquisition media
+  • Content marketing: guides on “how to interpret INEGI indicators” with
+    examples produced by the product (Spanish-language SEO).
+  • LinkedIn and X (Twitter) targeting university planning directors, think
+    tanks, and Mexico-based data consultancies.
+  • Partnerships with incubators, social-impact fintechs, and government
+    digitization programs (e.g. LAIN Mexico, open-data challenges).
+  • EdTech fairs and statistics conferences (AMECAP, CONAIS, state-university
+    congresses).
+  • Instructor referral program (limited free license in exchange for a
+    publishable case study).
+
+
+4. CUSTOMER RELATIONSHIPS
+--------------------------------------------------------------------------------
+
+4.1 Dominant relationship type
+  • Self-service in standard SaaS: sign-up, free trial with caps on PDF
+    exports and limited categories, online documentation.
+  • Standard ticket support (email / chat) on Pro and Enterprise plans.
+  • Personalized relationship for Enterprise: remote onboarding, connectors
+    to the customer database, scheduled INEGI→DB sync windows, and agreed
+    response SLAs.
+
+4.2 Retention strategies
+  • Automatic periodic refresh notifications for INEGI series (“new observation
+    available”) to build usage habits.
+  • Cloud report history (SaaS version) with institutional branding templates
+    in PDF.
+  • “Campus license” program: volume pricing by seats or number of instructors,
+    with exclusive teaching materials.
+  • Community of practice (quarterly webinars on critical reading of
+    indicators).
+
+
+5. REVENUE STREAMS
+--------------------------------------------------------------------------------
+
+5.1 Recommended model (blended)
+  • SaaS subscription (main recurring revenue): per-user or per institutional
+    “workspace” plans, with limits on PDF exports per month and on language-model
+    calls for auto-generated introductions.
+  • Perpetual or annual desktop license (project revenue): for clients whose
+    policies forbid public cloud; higher price including installation and
+    maintenance services.
+  • Professional services (20–30% of revenue in early stages): customization
+    of INEGI categories, integration with the customer’s SQL Server, training,
+    and corporate PDF template design.
+
+5.2 Freemium / trial
+  • Free tier: one category, delayed data or no DB persistence, watermark on
+    PDF, no priority support—aimed at acquisition.
+
+5.3 Pricing strategy (indicative—validate in market)
+  • Starter plan (freemium or low two-digit MXN/month): individual user, basic
+    dashboard, few exports.
+  • Pro plan (mid-range, monthly/annual billing): all categories, unmarked PDF,
+    Gemini integration with a reasonable quota.
+  • Institution / Enterprise (quoted pricing): SSO, dedicated DB or VPC, SLA,
+    scheduled sync, up to N users.
+  • 15–20% annual discount vs. monthly to improve retention and cash flow.
+
+  Note: API costs (Gemini) and possible INEGI token limits should be reflected
+  in pricing as transparent pass-through or credit packs.
+
+
+6. KEY RESOURCES
+--------------------------------------------------------------------------------
+
+6.1 Technology
+  • Current stack: Java 17, Maven, Swing (desktop); JFreeChart; iText 7;
+    Jackson; JDBC Microsoft SQL Server; standard HTTP client integration;
+    Gemini API for introductory text.
+  • SaaS evolution: backend (e.g. Spring Boot or Quarkus), web frontend
+    (React/Vue), queues for INEGI sync jobs, object storage for PDFs, managed
+    PostgreSQL or SQL Server, observability (logs, metrics).
+  • Infrastructure: cloud region preferably Mexico or nearby US for latency
+    and perceived data sovereignty (AWS, GCP, Azure).
+
+6.2 People
+  • CTO / lead full-stack engineer with API integration and security
+    experience.
+  • Product manager with public-data domain and analytical UX skills.
+  • Part-time data engineer to harden INEGI pipelines and series quality.
+  • Tier-1 customer support and success in Mexico City business hours.
+  • Part-time institutional B2B sales with education or government pipeline.
+
+6.3 Financial
+  • Seed capital for 12–18 months runway: core payroll, infrastructure,
+    initial marketing, and legal buffer (data protection, terms of use).
+  • Light credit line or factoring only if government contracts with deferred
+    payment are signed.
+
+
+7. KEY ACTIVITIES
+--------------------------------------------------------------------------------
+
+7.1 Software development and maintenance
+  • Maintain compatibility with INEGI API changes and monitor deprecations.
+  • Roadmap: web version, multi-tenant, role-based permissions, download audit
+    trails, and report versioning.
+  • Security hardening: secret rotation, API key storage, baseline compliance
+    (Mexico privacy notice if user personal data is processed).
+
+7.2 Marketing
+  • Documented use cases (before/after report production time).
+  • Social proof with logos from pilot universities or consultancies.
+
+7.3 Customer support
+  • Knowledge base on common failures (INEGI outages, firewalls, SQL Server
+    permissions).
+  • Institutional channel for Enterprise with an assigned engineer on critical
+    deployments.
+
+
+8. KEY PARTNERS
+--------------------------------------------------------------------------------
+
+8.1 Potential strategic allies
+  • Open-data centers and university labs (co-branding, academic validation).
+  • Consultant chambers or educational evaluation associations that position
+    the product as a standard tool for official sources.
+
+8.2 Service providers
+  • INEGI (BISE API under their terms): source of truth; operational dependency
+    to manage with monitoring and clear end-user communication.
+  • Google Gemini (or another LLM vendor): introduction generation; multi-vendor
+    option to reduce concentration risk.
+  • Cloud provider (hosting, managed DB, CDN).
+  • Recurring billing gateway (Stripe, Mercado Pago Subscriptions) and Mexico
+    e-invoicing (PAC / CFDI 4.0).
+  • Optional e-signature or timestamping if legal traceability of reports is
+    offered later (advanced niche).
+
+
+9. COST STRUCTURE
+--------------------------------------------------------------------------------
+
+9.1 Fixed costs (typical monthly for a lean SaaS operation)
+  • Core team payroll (2–4 people depending on stage).
+  • Baseline cloud infrastructure (compute, DB, storage, monitoring).
+  • SaaS tools (GitHub, CI/CD, helpdesk, product analytics).
+  • Legal and accounting (incorporation, master agreements, consumer protection
+    / PRODECON where applicable).
+  • Basic cyber insurance as Enterprise clients scale.
+
+9.2 Variable costs
+  • Language-model API usage proportional to PDFs or introductions generated.
+  • Bandwidth and storage for PDFs / history per customer.
+  • Payment gateway fees.
+  • Premium support and billable integration hours.
+  • Digital campaigns (CPC/CPM) scaling with acquisition.
+
+  Target gross margin (mature SaaS): 70–80% on software; lower on custom
+  integration projects.
+
+
+10. COMPETITIVE ADVANTAGE AND BARRIERS TO ENTRY
+--------------------------------------------------------------------------------
+
+10.1 What makes the project hard to copy
+  • Accumulated know-how of real INEGI JSON formats and time-series edge cases
+    (missing periods, CSV encoding, observation ordering).
+  • Integrated package (ingestion + visualization + PDF + optional SQL +
+    contextual text) already shipped; a generic BI competitor demands more user
+    configuration.
+  • Institutional relationships and wins in Mexican higher education build
+    trust and shorten sales cycles for the incumbent.
+  • Historical data and report templates hosted in the cloud version raise
+    switching costs (benign lock-in).
+
+10.2 Barriers to entry (and how to manage them)
+  • Dependence on INEGI policies and API availability: mitigate with a cache
+    layer, clear user messaging, and future diversification to other official
+    sources (CONEVAL, World Bank for comparables).
+  • AI API cost: mitigate with cheaper models, shorter text, “no-AI” mode on
+    basic plans.
+  • International BI-suite competition: compete on vertical specialization and
+    price, not breadth of generic features.
+
+
+================================================================================
+  FINAL NOTE
+  This model assumes the natural evolution from the current INEGI-centric Java
+  desktop product toward a scalable SaaS offering. Pricing and segments should
+  be validated through interviews with 10–15 decision-makers at universities and
+  consultancies, and willingness-to-pay (WTP) tests.
+================================================================================
+  END OF DOCUMENT
+================================================================================

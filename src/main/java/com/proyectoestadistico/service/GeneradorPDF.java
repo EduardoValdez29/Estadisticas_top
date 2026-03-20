@@ -1,5 +1,6 @@
 package com.proyectoestadistico.service;
 
+import com.proyectoestadistico.i18n.UiMessages;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -30,35 +31,35 @@ public class GeneradorPDF {
              PdfDocument pdf = new PdfDocument(writer);
              Document document = new Document(pdf, PageSize.A4)) {
 
-            document.add(new Paragraph("Reporte Estadístico").setFontSize(18));
+            document.add(new Paragraph(UiMessages.get("pdf.report.title")).setFontSize(18));
             if (introduccion != null && !introduccion.isBlank()) {
                 document.add(new Paragraph(introduccion).setFontSize(11));
                 document.add(new Paragraph("\n"));
             }
-            document.add(new Paragraph("Datos de origen (INEGI -> CSV)").setFontSize(11));
+            document.add(new Paragraph(UiMessages.get("pdf.source.line")).setFontSize(11));
             document.add(new Paragraph("\n"));
 
             agregarTabla(document, tabla);
 
             if (graficaBarras != null) {
-                document.add(new Paragraph("\nGráfica de barras").setFontSize(12));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.bar.title")).setFontSize(12));
                 document.add(crearImagenDesdeChart(graficaBarras));
             } else {
-                document.add(new Paragraph("\nNo se pudo generar la gráfica de barras."));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.chart.missing.bar")));
             }
 
             if (graficaLineas != null) {
-                document.add(new Paragraph("\nGráfica de líneas").setFontSize(12));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.line.title")).setFontSize(12));
                 document.add(crearImagenDesdeChart(graficaLineas));
             } else {
-                document.add(new Paragraph("\nNo se pudo generar la gráfica de líneas."));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.chart.missing.line")));
             }
 
             if (graficaDispersion != null) {
-                document.add(new Paragraph("\nGráfica de dispersión").setFontSize(12));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.scatter.title")).setFontSize(12));
                 document.add(crearImagenDesdeChart(graficaDispersion));
             } else {
-                document.add(new Paragraph("\nNo se pudo generar la gráfica de dispersión."));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.chart.missing.scatter")));
             }
         }
     }
@@ -74,20 +75,20 @@ public class GeneradorPDF {
              PdfDocument pdf = new PdfDocument(writer);
              Document document = new Document(pdf, PageSize.A4)) {
 
-            document.add(new Paragraph("Reporte Estadístico").setFontSize(18));
+            document.add(new Paragraph(UiMessages.get("pdf.report.title")).setFontSize(18));
             if (introduccion != null && !introduccion.isBlank()) {
                 document.add(new Paragraph(introduccion).setFontSize(11));
                 document.add(new Paragraph("\n"));
             }
-            document.add(new Paragraph("Datos de origen (INEGI -> CSV)").setFontSize(11));
+            document.add(new Paragraph(UiMessages.get("pdf.source.line")).setFontSize(11));
             document.add(new Paragraph("\n"));
 
             if (tablas == null || tablas.isEmpty()) {
-                document.add(new Paragraph("No hay tablas para mostrar."));
+                document.add(new Paragraph(UiMessages.get("pdf.no.tables")));
             } else {
                 int i = 1;
                 for (TablaDatos t : tablas) {
-                    document.add(new Paragraph("Tabla " + i).setFontSize(12));
+                    document.add(new Paragraph(UiMessages.get("pdf.table.prefix") + i).setFontSize(12));
                     agregarTabla(document, t);
                     document.add(new Paragraph("\n"));
                     i++;
@@ -95,31 +96,31 @@ public class GeneradorPDF {
             }
 
             if (graficaBarras != null) {
-                document.add(new Paragraph("\nGráfica de barras").setFontSize(12));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.bar.title")).setFontSize(12));
                 document.add(crearImagenDesdeChart(graficaBarras));
             } else {
-                document.add(new Paragraph("\nNo se pudo generar la gráfica de barras."));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.chart.missing.bar")));
             }
 
             if (graficaLineas != null) {
-                document.add(new Paragraph("\nGráfica de líneas").setFontSize(12));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.line.title")).setFontSize(12));
                 document.add(crearImagenDesdeChart(graficaLineas));
             } else {
-                document.add(new Paragraph("\nNo se pudo generar la gráfica de líneas."));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.chart.missing.line")));
             }
 
             if (graficaDispersion != null) {
-                document.add(new Paragraph("\nGráfica de dispersión").setFontSize(12));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.scatter.title")).setFontSize(12));
                 document.add(crearImagenDesdeChart(graficaDispersion));
             } else {
-                document.add(new Paragraph("\nNo se pudo generar la gráfica de dispersión."));
+                document.add(new Paragraph("\n" + UiMessages.get("pdf.chart.missing.scatter")));
             }
         }
     }
 
     private void agregarTabla(Document document, TablaDatos tabla) {
         if (tabla.getNumeroColumnas() == 0) {
-            document.add(new Paragraph("No hay datos para mostrar."));
+            document.add(new Paragraph(UiMessages.get("pdf.no.data")));
             return;
         }
 

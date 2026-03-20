@@ -1,5 +1,6 @@
 package com.proyectoestadistico.service;
 
+import com.proyectoestadistico.i18n.UiMessages;
 import com.proyectoestadistico.model.TablaDatos;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -147,7 +148,7 @@ public class GeneradorGraficas {
         if (tabla.getNumeroColumnas() < 2) {
             return dataset;
         }
-        XYSeries serie = new XYSeries("Serie");
+        XYSeries serie = new XYSeries(UiMessages.get("chart.series.default"));
         for (var fila : tabla.getFilas()) {
             try {
                 double x = Double.parseDouble(fila.get(0));
@@ -197,9 +198,9 @@ public class GeneradorGraficas {
     public JFreeChart crearGraficaBarras(TablaDatos tabla) {
         var dataset = crearDatasetCategoria(tabla);
         JFreeChart chart = ChartFactory.createBarChart(
-                "Gráfica de barras",
-                tabla.getNumeroColumnas() > 0 ? tabla.getEncabezados().get(0) : "Categoría",
-                tabla.getNumeroColumnas() > 1 ? tabla.getEncabezados().get(1) : "Valor",
+                UiMessages.get("chart.main.bar"),
+                tabla.getNumeroColumnas() > 0 ? tabla.getEncabezados().get(0) : UiMessages.get("chart.axis.category"),
+                tabla.getNumeroColumnas() > 1 ? tabla.getEncabezados().get(1) : UiMessages.get("chart.axis.value"),
                 dataset
         );
         aplicarTemaGeneral(chart);
@@ -216,11 +217,11 @@ public class GeneradorGraficas {
         var dataset = crearDatasetCategoria(tablas);
         String xLabel = (tablas != null && !tablas.isEmpty() && tablas.get(0) != null && tablas.get(0).getNumeroColumnas() > 0)
                 ? tablas.get(0).getEncabezados().get(0)
-                : "Categoría";
+                : UiMessages.get("chart.axis.category");
         JFreeChart chart = ChartFactory.createBarChart(
-                "Gráfica de barras (3 series)",
+                UiMessages.get("chart.main.bar3"),
                 xLabel,
-                "Valor",
+                UiMessages.get("chart.axis.value"),
                 dataset
         );
         aplicarTemaGeneral(chart);
@@ -238,9 +239,9 @@ public class GeneradorGraficas {
     public JFreeChart crearGraficaLineas(TablaDatos tabla) {
         var dataset = crearDatasetCategoria(tabla);
         JFreeChart chart = ChartFactory.createLineChart(
-                "Gráfica de líneas",
-                tabla.getNumeroColumnas() > 0 ? tabla.getEncabezados().get(0) : "Categoría",
-                tabla.getNumeroColumnas() > 1 ? tabla.getEncabezados().get(1) : "Valor",
+                UiMessages.get("chart.main.line"),
+                tabla.getNumeroColumnas() > 0 ? tabla.getEncabezados().get(0) : UiMessages.get("chart.axis.category"),
+                tabla.getNumeroColumnas() > 1 ? tabla.getEncabezados().get(1) : UiMessages.get("chart.axis.value"),
                 dataset
         );
         aplicarTemaGeneral(chart);
@@ -258,11 +259,11 @@ public class GeneradorGraficas {
         var dataset = crearDatasetCategoria(tablas);
         String xLabel = (tablas != null && !tablas.isEmpty() && tablas.get(0) != null && tablas.get(0).getNumeroColumnas() > 0)
                 ? tablas.get(0).getEncabezados().get(0)
-                : "Categoría";
+                : UiMessages.get("chart.axis.category");
         JFreeChart chart = ChartFactory.createLineChart(
-                "Gráfica de líneas (3 series)",
+                UiMessages.get("chart.main.line3"),
                 xLabel,
-                "Valor",
+                UiMessages.get("chart.axis.value"),
                 dataset
         );
         aplicarTemaGeneral(chart);
@@ -281,9 +282,9 @@ public class GeneradorGraficas {
     public JFreeChart crearGraficaDispersión(TablaDatos tabla) {
         var dataset = crearDatasetXY(tabla);
         JFreeChart chart = ChartFactory.createScatterPlot(
-                "Gráfica de dispersión",
-                tabla.getNumeroColumnas() > 0 ? tabla.getEncabezados().get(0) : "X",
-                tabla.getNumeroColumnas() > 1 ? tabla.getEncabezados().get(1) : "Y",
+                UiMessages.get("chart.main.scatter"),
+                tabla.getNumeroColumnas() > 0 ? tabla.getEncabezados().get(0) : UiMessages.get("chart.axis.x"),
+                tabla.getNumeroColumnas() > 1 ? tabla.getEncabezados().get(1) : UiMessages.get("chart.axis.y"),
                 dataset
         );
         aplicarTemaGeneral(chart);
@@ -299,11 +300,11 @@ public class GeneradorGraficas {
         var dataset = crearDatasetXY(tablas);
         String xLabel = (tablas != null && !tablas.isEmpty() && tablas.get(0) != null && tablas.get(0).getNumeroColumnas() > 0)
                 ? tablas.get(0).getEncabezados().get(0)
-                : "X";
+                : UiMessages.get("chart.axis.x");
         JFreeChart chart = ChartFactory.createScatterPlot(
-                "Gráfica de dispersión (3 series)",
+                UiMessages.get("chart.main.scatter3"),
                 xLabel,
-                "Y",
+                UiMessages.get("chart.axis.y"),
                 dataset
         );
         aplicarTemaGeneral(chart);

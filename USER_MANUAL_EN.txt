@@ -1,0 +1,145 @@
+================================================================================
+  USER MANUAL
+  Statistical Project — Report, charts, and PDF (INEGI data)
+  Documented version: aligned with the current Java Swing application
+================================================================================
+
+1. WHAT THIS APPLICATION IS FOR
+--------------------------------------------------------------------------------
+It downloads indicator data from INEGI (Mexico’s National Institute of
+Statistics and Geography) that is already configured in the program, displays
+it in tables and in three chart types (bar, line, and scatter), and saves a
+PDF report that includes a short auto-generated introduction (Google Gemini),
+when Internet access and an API key are available.
+
+You do not need to open CSV files manually: the program generates them when you
+refresh the data.
+
+
+2. WHAT YOU NEED ON YOUR COMPUTER
+--------------------------------------------------------------------------------
+  - Java 17 or later installed (same version whoever delivered the program uses).
+  - Internet connection for:
+      * downloading INEGI data when you click “Actualizar datos (INEGI)”;
+      * generating the PDF introduction text (Gemini), when applicable.
+  - If you enable “Guardar en BD (SQL Server)”, you must also have access to
+    the SQL server configured by whoever set up the project (not required if you
+    only want to view tables and charts on screen).
+
+
+3. HOW TO START THE PROGRAM
+--------------------------------------------------------------------------------
+Usually the developer runs the application from a console after building with
+Maven. If you only received a .jar file and libraries, follow the instructions
+that came with the package.
+
+When the main window opens you will see:
+  - Top: title, “Categoría” combo box, “Guardar en BD (SQL Server)” checkbox,
+    “Actualizar datos (INEGI)” button, “Generar PDF” button, and a status
+    indicator (colored label).
+  - Center, split into two areas:
+      * top: three TABLE tabs;
+      * bottom: three CHART tabs (Barras, Líneas, Dispersión).
+
+
+4. RECOMMENDED WORKFLOW
+--------------------------------------------------------------------------------
+
+  Step 1 — Decide whether to save to the database
+  - If you do NOT have SQL Server or do not want to write data: clear
+    “Guardar en BD (SQL Server)”.
+  - If your environment is set up for SQL Server and you want to store data in
+    the database: leave the box checked (it is usually checked by default).
+
+  Step 2 — Refresh INEGI data
+  - Click “Actualizar datos (INEGI)”.
+  - The button may be disabled for a while during the download. Do not close
+    the window.
+  - If all goes well, the status will show that data was updated (green text
+    or equivalent). If there is an error, a message will appear.
+
+  Step 3 — Choose a category
+  - Under “Categoría” you can choose among: Educación, Población, or Seguridad
+    (depending on the build you received).
+  - Changing the category refreshes the tables and charts for that data.
+
+  Step 4 — Review tables
+  - There are up to three table tabs. Each shows a time period column (X axis)
+    and one indicator column (Y axis), derived from the selected category’s
+    dataset.
+  - Numeric cells are formatted; the table is read-only.
+
+  Step 5 — Review charts
+  - “Barras” tab: comparison by period or category according to the data.
+  - “Líneas” tab: evolution over time.
+  - “Dispersión” tab: relationship between numeric values in the series.
+
+  Step 6 — Generate PDF (optional)
+  - Click “Generar PDF”.
+  - Choose folder and file name. If the file already exists, the program may
+    ask whether to overwrite it.
+  - The PDF will include the table for whichever table tab is currently
+    selected, plus the three charts for that same series, plus a short
+    introduction (if Gemini responds successfully).
+  - Wait until the process finishes; the button may be disabled while the PDF
+    is being built.
+
+
+5. WHERE CSV FILES ARE STORED ON YOUR COMPUTER
+--------------------------------------------------------------------------------
+After a successful INEGI refresh, the program creates (if needed) a folder such
+as:
+
+  Windows user:  C:\Users\<your_user>\ProyectoEstadistico\inegi_csv
+
+You will find one CSV per category (for example, names containing “DatosMexico_”
+and the category name). They serve as a local copy of what was downloaded; you
+do not need to open them manually to use the application.
+
+
+6. MESSAGES AND COMMON ISSUES
+--------------------------------------------------------------------------------
+
+  “Error al actualizar” / download failed
+  - Check your Internet connection. Try again later if the INEGI server is
+    slow or down.
+  - A corporate firewall may block the INEGI API host.
+
+  “Generar PDF” stays disabled
+  - Complete a successful data refresh first and have valid data on screen
+    (tables and charts generated).
+
+  PDF introduction says Gemini is unavailable or HTTP error
+  - Missing API key, quota exceeded, or network issue with Google. Depending on
+    the build, the rest of the PDF (table and charts) may still generate; read
+    the exact on-screen message.
+
+  “Guardar en BD” fails
+  - SQL Server is unreachable, credentials are wrong, or the database was not
+    set up as expected. Clear the checkbox if you only need on-screen data and
+    local CSV. For database use, contact technical support or whoever configured
+    the server.
+
+  Few tables or column warning
+  - Some datasets have fewer indicators; the program can only derive as many
+    tables as there are indicator columns in addition to the period column.
+
+
+7. TIPS
+--------------------------------------------------------------------------------
+  - For a PDF focused on a specific indicator, select that indicator’s table tab
+    before clicking “Generar PDF”.
+  - On-screen combined charts use the three derived series; the PDF uses the
+    series from the selected tab for all three views (bar, line, scatter) of the
+    same X–Y pair.
+
+
+8. CONTACT AND SUPPORT
+--------------------------------------------------------------------------------
+Contact the project author or the team that gave you the executable for Java,
+Maven, SQL Server, and API key setup.
+
+
+================================================================================
+  END OF USER MANUAL
+================================================================================
