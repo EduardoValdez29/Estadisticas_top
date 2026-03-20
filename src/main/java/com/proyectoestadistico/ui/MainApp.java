@@ -1,6 +1,8 @@
 package com.proyectoestadistico.ui;
 
 import com.proyectoestadistico.model.TablaDatos;
+import com.proyectoestadistico.service.ActualizadorINEGI;
+import com.proyectoestadistico.service.GeminiIntroduccionService;
 import com.proyectoestadistico.service.GeneradorGraficas;
 import com.proyectoestadistico.service.GeneradorPDF;
 import com.proyectoestadistico.service.LectorCSV;
@@ -21,18 +23,24 @@ import java.nio.file.Files;
 public class MainApp extends JFrame {
 
     private final LectorCSV lectorCSV = new LectorCSV();
+    private final ActualizadorINEGI actualizadorINEGI = new ActualizadorINEGI();
+    private final GeminiIntroduccionService geminiIntroduccionService = new GeminiIntroduccionService();
     private final GeneradorGraficas generadorGraficas = new GeneradorGraficas();
     private final GeneradorPDF generadorPDF = new GeneradorPDF();
 
     private TablaDatos tablaDatosOriginal;
     private java.util.List<TablaDatos> tablasDerivadas = java.util.Collections.emptyList();
+    private java.util.Map<String, Path> csvPorCategoria = java.util.Collections.emptyMap();
 
     private JFreeChart graficaBarras;
     private JFreeChart graficaLineas;
     private JFreeChart graficaDispersion;
 
     private final UITheme theme;
+    private JButton btnActualizarDatos;
     private JButton btnGenerarPdf;
+    private JComboBox<String> comboCategoria;
+    private JCheckBox chkPersistirBD;
     private JLabel badgeEstadoCsv;
 
     public MainApp() {
@@ -56,11 +64,11 @@ public class MainApp extends JFrame {
         ));
         topPanel.setBackground(theme.bg1);
 
-        JLabel titulo = new JLabel("Agregue un CSV para visualizarlo");
+        JLabel titulo = new JLabel("Actualice datos (INEGI) para visualizarlo");
         titulo.setFont(theme.titleFont(titulo));
         titulo.setForeground(theme.text);
 
-        JLabel subtitulo = new JLabel("Cargue un CSV para visualizar la tabla y las tres gráficas");
+        JLabel subtitulo = new JLabel("Se descargan datos por HTTP, se convierten a CSV y (opcional) se guardan en SQL Server");
         subtitulo.setFont(theme.subtitleFont(subtitulo));
         subtitulo.setForeground(theme.muted);
 
@@ -71,9 +79,29 @@ public class MainApp extends JFrame {
         tituloPanel.add(Box.createVerticalStrut(2));
         tituloPanel.add(subtitulo);
 
+        comboCategoria = new JComboBox<>(new String[]{"Educación", "Población", "Seguridad"});
+        comboCategoria.setEnabled(false);
+        comboCategoria.setBackground(theme.bg1);
+        comboCategoria.setForeground(theme.text);
+        comboCategoria.setOpaque(true);
+        comboCategoria.setBorder(theme.roundedBorder(theme.border));
+        comboCategoria.addActionListener(ev -> cargarVisualizacionDesdeCategoriaSeleccionada());
+
+        JPanel categoriaPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        categoriaPanel.setOpaque(false);
+        JLabel lblCategoria = new JLabel("Categoría:");
+        lblCategoria.setForeground(theme.muted);
+        lblCategoria.setFont(lblCategoria.getFont().deriveFont(Font.BOLD, 12f));
+        categoriaPanel.add(lblCategoria);
+        categoriaPanel.add(comboCategoria);
+
+        tituloPanel.add(Box.createVerticalStrut(10));
+        tituloPanel.add(categoriaPanel);
+        tituloPanel.add(Box.createVerticalStrut(2));
+
         JPanel botonesPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         botonesPanel.setOpaque(false);
-        badgeEstadoCsv = new JLabel("CSV no cargado");
+        badgeEstadoCsv = new JLabel("Datos no actualizados");
         badgeEstadoCsv.setOpaque(true);
         badgeEstadoCsv.setBackground(theme.bg2);
         badgeEstadoCsv.setForeground(theme.muted);
@@ -82,18 +110,24 @@ public class MainApp extends JFrame {
                 BorderFactory.createEmptyBorder(2, 8, 2, 8)
         ));
 
-        JButton btnCargarCsv = crearBotonPrimario("Cargar CSV", theme.neonCyan, theme.neonCyan.darker());
-        btnCargarCsv.setToolTipText("Selecciona un archivo CSV exportado desde Excel");
+        chkPersistirBD = new JCheckBox("Guardar en BD (SQL Server)");
+        chkPersistirBD.setSelected(true);
+        chkPersistirBD.setOpaque(false);
+        chkPersistirBD.setForeground(theme.text);
+
+        btnActualizarDatos = crearBotonPrimario("Actualizar datos (INEGI)", theme.neonCyan, theme.neonCyan.darker());
+        btnActualizarDatos.setToolTipText("Descarga JSON desde INEGI, genera CSV y lo inserta en SQL Server (si está activo)");
         btnGenerarPdf = crearBotonSecundario("Generar PDF");
         btnGenerarPdf.setToolTipText("Genera un reporte en PDF con la tabla y las gráficas");
         btnGenerarPdf.setEnabled(false);
 
-        btnCargarCsv.addActionListener(this::accionCargarCsv);
+        btnActualizarDatos.addActionListener(this::accionCargarCsv);
         btnGenerarPdf.addActionListener(this::accionGenerarPdf);
 
         botonesPanel.add(badgeEstadoCsv);
         botonesPanel.add(Box.createHorizontalStrut(6));
-        botonesPanel.add(btnCargarCsv);
+        botonesPanel.add(chkPersistirBD);
+        botonesPanel.add(btnActualizarDatos);
         botonesPanel.add(btnGenerarPdf);
 
         topPanel.add(tituloPanel, BorderLayout.WEST);
@@ -217,11 +251,11 @@ public class MainApp extends JFrame {
         stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
         stack.add(new PlaceholderIcon(theme.neonCyan));
         stack.add(Box.createVerticalStrut(10));
-        JLabel label = new JLabel("Cargue un CSV para ver la " + titulo, SwingConstants.CENTER);
+        JLabel label = new JLabel("Actualice datos (INEGI) para ver la " + titulo, SwingConstants.CENTER);
         label.setForeground(theme.muted);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         stack.add(label);
-        JLabel hint = new JLabel("Tip: use CSV con columnas X, Y1, Y2, Y3", SwingConstants.CENTER);
+        JLabel hint = new JLabel("Tip: el flujo usa `Periodo` como X y los primeros 3 indicadores como Y", SwingConstants.CENTER);
         hint.setForeground(new Color(120, 140, 190));
         hint.setAlignmentX(Component.CENTER_ALIGNMENT);
         hint.setFont(hint.getFont().deriveFont(Font.PLAIN, 11f));
@@ -239,11 +273,11 @@ public class MainApp extends JFrame {
         stack.setLayout(new BoxLayout(stack, BoxLayout.Y_AXIS));
         stack.add(new PlaceholderIcon(theme.neonPurple));
         stack.add(Box.createVerticalStrut(10));
-        JLabel label = new JLabel("Cargue un CSV para ver la " + titulo, SwingConstants.CENTER);
+        JLabel label = new JLabel("Actualice datos (INEGI) para ver la " + titulo, SwingConstants.CENTER);
         label.setForeground(theme.muted);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         stack.add(label);
-        JLabel hint = new JLabel("Datos cargados en modo solo lectura", SwingConstants.CENTER);
+        JLabel hint = new JLabel("Datos en modo solo lectura (descargados por HTTP)", SwingConstants.CENTER);
         hint.setForeground(new Color(120, 140, 190));
         hint.setAlignmentX(Component.CENTER_ALIGNMENT);
         hint.setFont(hint.getFont().deriveFont(Font.PLAIN, 11f));
@@ -254,38 +288,112 @@ public class MainApp extends JFrame {
     }
 
     private void accionCargarCsv(ActionEvent e) {
-        Path ruta = mostrarDialogoAbrirArchivoNativo("Selecciona archivo CSV (exportado desde Excel)", "*.csv");
-        if (ruta == null) return;
-        if (!ruta.getFileName().toString().toLowerCase().endsWith(".csv")) {
-            mostrarWarn("Archivo inválido", "Selecciona un archivo con extensión <b>.csv</b>.");
+        if (btnActualizarDatos == null) return;
+
+        boolean persistirBD = chkPersistirBD != null && chkPersistirBD.isSelected();
+        Path carpetaSalida = Path.of(System.getProperty("user.home"), "ProyectoEstadistico", "inegi_csv");
+
+        btnActualizarDatos.setEnabled(false);
+        actualizarEstadoBotonPdf(false);
+        if (comboCategoria != null) comboCategoria.setEnabled(false);
+        actualizarBadgeCsv("Descargando INEGI...", theme.neonMagenta, theme.bg0);
+
+        SwingWorker<ActualizadorINEGI.Resultado, Void> worker = new SwingWorker<>() {
+            @Override
+            protected ActualizadorINEGI.Resultado doInBackground() throws Exception {
+                return actualizadorINEGI.actualizar(persistirBD, carpetaSalida);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    ActualizadorINEGI.Resultado resultado = get();
+                    csvPorCategoria = resultado.csvPorCategoria();
+
+                    if (comboCategoria != null) {
+                        comboCategoria.setEnabled(true);
+                        cargarVisualizacionDesdeCategoriaSeleccionada();
+                    }
+
+                    actualizarBadgeCsv(
+                            persistirBD ? "Datos actualizados y BD guardada" : "Datos actualizados (CSV)",
+                            theme.neonGreen,
+                            theme.bg0
+                    );
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    actualizarBadgeCsv("Error al actualizar", theme.danger, theme.bg0);
+                    String msg = ex.getMessage();
+                    mostrarError("Error al actualizar datos", msg == null || msg.isBlank()
+                            ? "Ocurrió un error actualizando los datos." : msg);
+                    actualizarEstadoBotonPdf(false);
+                } finally {
+                    btnActualizarDatos.setEnabled(true);
+                }
+            }
+        };
+
+        worker.execute();
+    }
+
+    private void cargarVisualizacionDesdeCategoriaSeleccionada() {
+        if (comboCategoria == null) return;
+        Object item = comboCategoria.getSelectedItem();
+        if (item == null) return;
+        cargarVisualizacionDesdeCategoria(item.toString());
+    }
+
+    private void cargarVisualizacionDesdeCategoria(String categoria) {
+        if (categoria == null || categoria.isBlank()) return;
+        if (csvPorCategoria == null || csvPorCategoria.isEmpty()) {
+            actualizarBadgeCsv("Primero actualice los datos", theme.neonMagenta, theme.bg0);
+            actualizarEstadoBotonPdf(false);
             return;
         }
-        try {
-            tablaDatosOriginal = lectorCSV.leer(ruta);
 
+        Path csv = csvPorCategoria.get(categoria);
+        if (csv == null || !Files.exists(csv)) {
+            mostrarWarn("CSV no encontrado",
+                    "No se encontró el CSV para la categoría seleccionada: <b>" + escapar(categoria) + "</b>.");
+            actualizarEstadoBotonPdf(false);
+            return;
+        }
+
+        try {
+            tablaDatosOriginal = lectorCSV.leer(csv);
             if (tablaDatosOriginal == null || tablaDatosOriginal.getNumeroColumnas() == 0) {
-                mostrarError("CSV inválido", "El archivo no contiene encabezados o columnas.");
+                mostrarError("Datos inválidos", "El CSV no contiene encabezados o columnas.");
+                actualizarEstadoBotonPdf(false);
                 return;
             }
             if (tablaDatosOriginal.getNumeroFilas() == 0) {
-                mostrarWarn("CSV sin datos", "El archivo se cargó, pero no tiene filas de datos.");
+                mostrarWarn("CSV sin datos", "El CSV se cargó, pero no tiene filas de datos.");
             }
 
             tablasDerivadas = derivarTresTablas(tablaDatosOriginal);
+
+            if (tablasDerivadas == null || tablasDerivadas.isEmpty()) {
+                actualizarEstadoBotonPdf(false);
+                mostrarWarn("No se pudo derivar", "Los datos no permiten generar gráficas (columnas insuficientes).");
+            } else {
+                poblarTablasSwing();
+                generarGraficas();
+                actualizarEstadoBotonPdf(true);
+            }
+
             if (tablaDatosOriginal.getNumeroColumnas() < 4) {
                 int posibles = Math.max(0, Math.min(3, tablaDatosOriginal.getNumeroColumnas() - 1));
                 mostrarWarn("Columnas insuficientes",
                         "Para crear <b>3 tablas</b> se requieren 4 columnas (X + Y1 + Y2 + Y3).<br>" +
                                 "Este CSV permite crear <b>" + posibles + "</b> tabla(s).");
             }
-            poblarTablasSwing();
-            generarGraficas();
-            actualizarEstadoBotonPdf(true);
-            actualizarBadgeCsv("CSV cargado", theme.neonGreen, theme.bg0);
+
+            actualizarBadgeCsv("Mostrando: " + categoria, theme.neonGreen, theme.bg0);
         } catch (IOException ex) {
             ex.printStackTrace();
             mostrarError("Error al leer CSV", ex.getMessage() == null ? "Ocurrió un error leyendo el archivo." : ex.getMessage());
-            actualizarBadgeCsv("Error al cargar CSV", theme.danger, theme.bg0);
+            actualizarBadgeCsv("Error al cargar datos", theme.danger, theme.bg0);
+            actualizarEstadoBotonPdf(false);
         }
     }
 
@@ -472,7 +580,7 @@ public class MainApp extends JFrame {
 
     private void accionGenerarPdf(ActionEvent e) {
         if (tablasDerivadas == null || tablasDerivadas.isEmpty()) {
-            mostrarInfo("Aviso", "Primero cargue un archivo CSV.");
+            mostrarInfo("Aviso", "Primero actualice los datos (INEGI).");
             return;
         }
 
@@ -488,14 +596,81 @@ public class MainApp extends JFrame {
         } catch (Exception ignored) {
         }
 
+        // Generamos el PDF en background porque llamamos a Gemini.
+        btnGenerarPdf.setEnabled(false);
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            Exception error;
+
+            @Override
+            protected Void doInBackground() {
+                try {
+                    TablaDatos tablaSeleccionada = obtenerTablaSeleccionadaParaPdf();
+                    String categoria = obtenerCategoriaSeleccionada();
+                    String indicador = obtenerIndicadorSeleccionadoParaPdf();
+
+                    // Gemini texto corto (<= 750 caracteres)
+                    String introduccion = geminiIntroduccionService.generarIntroduccion(categoria, indicador);
+
+                    // Graficas y tabla del indicador seleccionado
+                    JFreeChart barrasSel = generadorGraficas.crearGraficaBarras(tablaSeleccionada);
+                    JFreeChart lineasSel = generadorGraficas.crearGraficaLineas(tablaSeleccionada);
+                    JFreeChart dispSel = generadorGraficas.crearGraficaDispersión(tablaSeleccionada);
+
+                    generadorPDF.generarReporteConGraficas(destino, tablaSeleccionada,
+                            introduccion, barrasSel, lineasSel, dispSel);
+                } catch (Exception ex) {
+                    error = ex;
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    if (error != null) {
+                        error.printStackTrace();
+                        String msg = error.getMessage() == null ? "" : error.getMessage();
+                        mostrarError("Error al generar PDF", error.getClass().getSimpleName() + (msg.isBlank() ? "" : (" - " + msg)));
+                        return;
+                    }
+                    mostrarInfo("Éxito", "Reporte generado correctamente:<br><b>" + escapar(destino.toString()) + "</b>");
+                } finally {
+                    btnGenerarPdf.setEnabled(true);
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private String obtenerCategoriaSeleccionada() {
+        if (comboCategoria == null) return "";
+        Object item = comboCategoria.getSelectedItem();
+        return item == null ? "" : item.toString();
+    }
+
+    private TablaDatos obtenerTablaSeleccionadaParaPdf() {
+        int idx = 0;
         try {
-            generadorPDF.generarReporteConGraficas(destino, tablasDerivadas,
-                    graficaBarras, graficaLineas, graficaDispersion);
-            mostrarInfo("Éxito", "Reporte generado correctamente:<br><b>" + escapar(destino.toString()) + "</b>");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            String msg = ex.getMessage() == null ? "" : ex.getMessage();
-            mostrarError("Error al generar PDF", ex.getClass().getSimpleName() + (msg.isBlank() ? "" : (" - " + msg)));
+            JTabbedPane tabsTablas = (JTabbedPane) getRootPane().getClientProperty("tabsTablas");
+            if (tabsTablas != null) idx = Math.max(0, tabsTablas.getSelectedIndex());
+        } catch (Exception ignored) {
+        }
+        if (tablasDerivadas == null || tablasDerivadas.isEmpty()) {
+            return new TablaDatos();
+        }
+        if (idx >= 0 && idx < tablasDerivadas.size()) {
+            return tablasDerivadas.get(idx);
+        }
+        return tablasDerivadas.get(0);
+    }
+
+    private String obtenerIndicadorSeleccionadoParaPdf() {
+        try {
+            TablaDatos t = obtenerTablaSeleccionadaParaPdf();
+            if (t == null || t.getEncabezados() == null || t.getEncabezados().size() < 2) return "";
+            return t.getEncabezados().get(1);
+        } catch (Exception ignored) {
+            return "";
         }
     }
 

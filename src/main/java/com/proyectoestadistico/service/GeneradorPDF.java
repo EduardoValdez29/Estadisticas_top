@@ -21,6 +21,7 @@ public class GeneradorPDF {
 
     public void generarReporteConGraficas(Path destino,
                                           TablaDatos tabla,
+                                          String introduccion,
                                           JFreeChart graficaBarras,
                                           JFreeChart graficaLineas,
                                           JFreeChart graficaDispersion) throws IOException {
@@ -30,7 +31,11 @@ public class GeneradorPDF {
              Document document = new Document(pdf, PageSize.A4)) {
 
             document.add(new Paragraph("Reporte Estadístico").setFontSize(18));
-            document.add(new Paragraph("Datos de origen (CSV convertido desde Excel)").setFontSize(11));
+            if (introduccion != null && !introduccion.isBlank()) {
+                document.add(new Paragraph(introduccion).setFontSize(11));
+                document.add(new Paragraph("\n"));
+            }
+            document.add(new Paragraph("Datos de origen (INEGI -> CSV)").setFontSize(11));
             document.add(new Paragraph("\n"));
 
             agregarTabla(document, tabla);
@@ -60,6 +65,7 @@ public class GeneradorPDF {
 
     public void generarReporteConGraficas(Path destino,
                                           java.util.List<TablaDatos> tablas,
+                                          String introduccion,
                                           JFreeChart graficaBarras,
                                           JFreeChart graficaLineas,
                                           JFreeChart graficaDispersion) throws IOException {
@@ -69,7 +75,11 @@ public class GeneradorPDF {
              Document document = new Document(pdf, PageSize.A4)) {
 
             document.add(new Paragraph("Reporte Estadístico").setFontSize(18));
-            document.add(new Paragraph("Datos de origen (CSV convertido desde Excel)").setFontSize(11));
+            if (introduccion != null && !introduccion.isBlank()) {
+                document.add(new Paragraph(introduccion).setFontSize(11));
+                document.add(new Paragraph("\n"));
+            }
+            document.add(new Paragraph("Datos de origen (INEGI -> CSV)").setFontSize(11));
             document.add(new Paragraph("\n"));
 
             if (tablas == null || tablas.isEmpty()) {
